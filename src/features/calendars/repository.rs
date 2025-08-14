@@ -5,7 +5,8 @@ use sqlx::{MySql, Pool};
 #[async_trait]
 pub trait CalendarsRepository: Send + Sync {
     async fn list(&self) -> sqlx::Result<Vec<CalendarRow>>;
-    async fn get(&self, id: u64) -> sqlx::Result<Option<CalendarRow>>;
+    async fn get_by_id(&self, id: u64) -> sqlx::Result<Option<CalendarRow>>;
+    async fn get_by_name(&self, name: &str) -> sqlx::Result<Option<CalendarRow>>;
     async fn insert(&self, name: &str, active: bool) -> sqlx::Result<u64>;
     // async fn update(&self, id: u64, name: Option<&str>, active: Option<bool>) -> sqlx::Result<bool>;
     // async fn delete(&self, id: u64) -> sqlx::Result<bool>;
@@ -45,17 +46,31 @@ impl CalendarsRepository for MySqlCalendarsRepository {
             .collect())
     }
 
-    async fn get(&self, id: u64) -> sqlx::Result<Option<CalendarRow>> {
+    async fn get_by_id(&self, id: u64) -> sqlx::Result<Option<CalendarRow>> {
         let row = sqlx::query!(r#"SELECT * FROM calendars WHERE id = ?"#, id)
             .fetch_optional(&self.pool)
             .await?;
 
-        Ok(row.map(|r| CalendarRow {
-            id: r.id,
-            name: r.name,
-            active: r.active != 0,
-            created_at: r.created_at.naive_utc(),
-            updated_at: r.updated_at.naive_utc(),
+        Ok(row.map(|row| CalendarRow {
+            id: row.id,
+            name: row.name,
+            active: row.active != 0,
+            created_at: row.created_at.naive_utc(),
+            updated_at: row.updated_at.naive_utc(),
+        }))
+    }
+
+    async fn get_by_name(&self, name: &str) -> sqlx::Result<Option<CalendarRow>> {
+        let row = sqlx::query!(r#"SELECT * FROM calendars WHERE name = ?"#, name)
+            .fetch_optional(&self.pool)
+            .await?;
+
+        Ok(row.map(|row| CalendarRow {
+            id: row.id,
+            name: row.name,
+            active: row.active != 0,
+            created_at: row.created_at.naive_utc(),
+            updated_at: row.updated_at.naive_utc(),
         }))
     }
 
