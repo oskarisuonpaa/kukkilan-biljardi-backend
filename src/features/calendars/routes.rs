@@ -21,7 +21,7 @@ pub fn routes() -> Router<AppState> {
 
 async fn list(State(state): State<AppState>) -> Result<Json<Vec<CalendarResponse>>, AppError> {
     let rows = state.calendars.list().await?;
-    Ok(Json(rows.into_iter().map(to_response).collect()))
+    Ok(Json(rows.into_iter().map(row_to_response).collect()))
 }
 
 async fn get_by_id(
@@ -29,7 +29,7 @@ async fn get_by_id(
     Path(id): Path<u64>,
 ) -> Result<Json<CalendarResponse>, AppError> {
     let row = state.calendars.get_by_id(id).await?;
-    Ok(Json(to_response(row)))
+    Ok(Json(row_to_response(row)))
 }
 
 async fn create(
@@ -37,7 +37,7 @@ async fn create(
     Json(body): Json<CreateCalendarRequest>,
 ) -> Result<Json<CalendarResponse>, AppError> {
     let row = state.calendars.create(body).await?;
-    Ok(Json(to_response(row)))
+    Ok(Json(row_to_response(row)))
 }
 
 async fn update(
@@ -46,10 +46,10 @@ async fn update(
     Json(body): Json<UpdateCalendarRequest>,
 ) -> Result<Json<CalendarResponse>, AppError> {
     let row = state.calendars.update(id, body).await?;
-    Ok(Json(to_response(row)))
+    Ok(Json(row_to_response(row)))
 }
 
-fn to_response(row: CalendarRow) -> CalendarResponse {
+fn row_to_response(row: CalendarRow) -> CalendarResponse {
     CalendarResponse {
         id: row.id,
         name: row.name,

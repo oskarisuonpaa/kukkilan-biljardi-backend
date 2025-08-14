@@ -51,7 +51,7 @@ impl CalendarsService {
         request: UpdateCalendarRequest,
     ) -> Result<CalendarRow, AppError> {
         if self.repository.get_by_id(id).await?.is_none() {
-            return Err(AppError::NotFound("Calendar was not found".into()));
+            return Err(AppError::NotFound("Calendar not found".into()));
         }
 
         let updated = self
