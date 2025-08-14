@@ -5,7 +5,8 @@ use sqlx::{MySql, Pool};
 #[async_trait]
 pub trait CalendarsRepository: Send + Sync {
     async fn list(&self) -> sqlx::Result<Vec<CalendarRow>>;
-    // async fn insert(&self, name: &str, active: Option<bool>) -> sqlx::Result<u64>;
+    async fn get(&self, id: u64) -> sqlx::Result<Option<CalendarRow>>;
+    async fn insert(&self, name: &str, active: bool) -> sqlx::Result<u64>;
     // async fn update(&self, id: u64, name: Option<&str>, active: Option<bool>) -> sqlx::Result<bool>;
     // async fn delete(&self, id: u64) -> sqlx::Result<bool>;
 }
@@ -42,5 +43,31 @@ impl CalendarsRepository for MySqlCalendarsRepository {
                 updated_at: row.updated_at.naive_utc(),
             })
             .collect())
+    }
+
+    async fn get(&self, id: u64) -> sqlx::Result<Option<CalendarRow>> {
+        let row = sqlx::query!(r#"SELECT * FROM calendars WHERE id = ?"#, id)
+            .fetch_optional(&self.pool)
+            .await?;
+
+        Ok(row.map(|r| CalendarRow {
+            id: r.id,
+            name: r.name,
+            active: r.active != 0,
+            created_at: r.created_at.naive_utc(),
+            updated_at: r.updated_at.naive_utc(),
+        }))
+    }
+
+    async fn insert(&self, name: &str, active: bool) -> sqlx::Result<u64> {
+        let response = sqlx::query!(
+            r#"INSERT INTO calendars (name, active) VALUES (?,?)"#,
+            name,
+            active
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(response.last_insert_id())
     }
 }

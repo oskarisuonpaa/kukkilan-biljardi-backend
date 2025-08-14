@@ -7,7 +7,7 @@ pub struct CalendarResponse {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct CreateRequest {
+pub struct CreateCalendarRequest {
     pub name: String,
     pub active: Option<bool>,
 }
