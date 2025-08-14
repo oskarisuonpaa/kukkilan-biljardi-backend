@@ -115,9 +115,11 @@ impl CalendarsRepository for MySqlCalendarsRepository {
         if let Some(name) = name {
             query = query.bind(name);
         }
+
         if let Some(active) = active {
             query = query.bind(active);
         }
+
         query = query.bind(id);
 
         let res = query.execute(&self.pool).await?;

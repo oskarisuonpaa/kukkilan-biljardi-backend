@@ -1,0 +1,5 @@
+- [ ] Add Status Codes to Responses -> response.rs
+- [ ] Push “is it found?”, “is name taken?” etc. into the service
+- [ ] Add delete
+- [ ] Testing
+- [ ] Validation
