@@ -1,6 +1,6 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize)]
 pub struct CalendarResponse {
     pub id: u64,
     pub name: String,
