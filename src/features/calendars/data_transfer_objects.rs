@@ -12,8 +12,8 @@ pub struct CreateCalendarRequest {
     pub active: Option<bool>,
 }
 
-// #[derive(Debug, Deserialize)]
-// pub struct UpdateCalendarRequest {
-//     pub name: Option<String>,
-//     pub active: Option<bool>,
-// }
+#[derive(Debug, Deserialize)]
+pub struct UpdateCalendarRequest {
+    pub name: Option<String>,
+    pub active: Option<bool>,
+}

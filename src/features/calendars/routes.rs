@@ -7,7 +7,7 @@ use axum::{
 use crate::{
     error::AppError,
     features::calendars::{
-        data_transfer_objects::{CalendarResponse, CreateCalendarRequest},
+        data_transfer_objects::{CalendarResponse, CreateCalendarRequest, UpdateCalendarRequest},
         model::CalendarRow,
     },
     state::AppState,
@@ -16,7 +16,7 @@ use crate::{
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/api/calendars", get(list).post(create))
-        .route("/api/calendars/{id}", get(get_by_id))
+        .route("/api/calendars/{id}", get(get_by_id).put(update))
 }
 
 async fn list(State(state): State<AppState>) -> Result<Json<Vec<CalendarResponse>>, AppError> {
@@ -40,14 +40,14 @@ async fn create(
     Ok(Json(to_response(row)))
 }
 
-// async fn update(
-//     State(state): State<AppState>,
-//     Path(id): Path<u64>,
-//     Json(body): Json<UpdateCalendarRequest>,
-// ) -> Result<Json<CalendarResponse>, AppError> {
-//      let row = state.calendars.update(body).await?;
-//      Ok(Json(to_response(row)))
-// }
+async fn update(
+    State(state): State<AppState>,
+    Path(id): Path<u64>,
+    Json(body): Json<UpdateCalendarRequest>,
+) -> Result<Json<CalendarResponse>, AppError> {
+    let row = state.calendars.update(id, body).await?;
+    Ok(Json(to_response(row)))
+}
 
 fn to_response(row: CalendarRow) -> CalendarResponse {
     CalendarResponse {

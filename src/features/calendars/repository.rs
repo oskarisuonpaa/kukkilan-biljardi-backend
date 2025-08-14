@@ -8,7 +8,8 @@ pub trait CalendarsRepository: Send + Sync {
     async fn get_by_id(&self, id: u64) -> sqlx::Result<Option<CalendarRow>>;
     async fn get_by_name(&self, name: &str) -> sqlx::Result<Option<CalendarRow>>;
     async fn insert(&self, name: &str, active: bool) -> sqlx::Result<u64>;
-    // async fn update(&self, id: u64, name: Option<&str>, active: Option<bool>) -> sqlx::Result<bool>;
+    async fn update(&self, id: u64, name: Option<&str>, active: Option<bool>)
+    -> sqlx::Result<bool>;
     // async fn delete(&self, id: u64) -> sqlx::Result<bool>;
 }
 
@@ -84,5 +85,42 @@ impl CalendarsRepository for MySqlCalendarsRepository {
         .await?;
 
         Ok(response.last_insert_id())
+    }
+
+    async fn update(
+        &self,
+        id: u64,
+        name: Option<&str>,
+        active: Option<bool>,
+    ) -> sqlx::Result<bool> {
+        let mut sql = String::from("UPDATE calendars SET ");
+        let mut set_parts = vec![];
+
+        if name.is_some() {
+            set_parts.push("name = ?");
+        }
+        if active.is_some() {
+            set_parts.push("active = ?");
+        }
+
+        if set_parts.is_empty() {
+            return Ok(false);
+        }
+
+        sql.push_str(&set_parts.join(", "));
+        sql.push_str(" WHERE id = ?");
+
+        let mut query = sqlx::query(&sql);
+
+        if let Some(name) = name {
+            query = query.bind(name);
+        }
+        if let Some(active) = active {
+            query = query.bind(active);
+        }
+        query = query.bind(id);
+
+        let res = query.execute(&self.pool).await?;
+        Ok(res.rows_affected() > 0)
     }
 }

@@ -1,6 +1,9 @@
 use crate::{
     error::AppError,
-    features::calendars::{data_transfer_objects::CreateCalendarRequest, model::CalendarRow},
+    features::calendars::{
+        data_transfer_objects::{CreateCalendarRequest, UpdateCalendarRequest},
+        model::CalendarRow,
+    },
 };
 
 use super::repository::DynamicCalendarsRepository;
@@ -40,5 +43,28 @@ impl CalendarsService {
             .ok_or_else(|| AppError::Database(sqlx::Error::RowNotFound))?;
 
         Ok(row)
+    }
+
+    pub async fn update(
+        &self,
+        id: u64,
+        request: UpdateCalendarRequest,
+    ) -> Result<CalendarRow, AppError> {
+        if self.repository.get_by_id(id).await?.is_none() {
+            return Err(AppError::NotFound("Calendar was not found".into()));
+        }
+
+        let updated = self
+            .repository
+            .update(id, request.name.as_deref(), request.active)
+            .await?;
+
+        if updated {
+            Ok(self.get_by_id(id).await?)
+        } else {
+            Err(AppError::Database(sqlx::Error::InvalidArgument(
+                "No arguments given".into(),
+            )))
+        }
     }
 }
