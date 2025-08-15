@@ -1,7 +1,6 @@
 use axum::{
     Json, Router,
     extract::{Path, State},
-    http::StatusCode,
     routing::get,
 };
 
@@ -11,7 +10,7 @@ use crate::{
         data_transfer_objects::{CalendarResponse, CreateCalendarRequest, UpdateCalendarRequest},
         model::CalendarRow,
     },
-    response::Created,
+    response::{Created, NoContent},
     state::AppState,
 };
 
@@ -50,9 +49,9 @@ async fn update(
     State(state): State<AppState>,
     Path(id): Path<u64>,
     Json(body): Json<UpdateCalendarRequest>,
-) -> Result<StatusCode, AppError> {
+) -> Result<NoContent, AppError> {
     state.calendars.update(id, body).await?;
-    Ok(StatusCode::NO_CONTENT)
+    Ok(NoContent)
 }
 
 fn row_to_response(row: CalendarRow) -> CalendarResponse {
