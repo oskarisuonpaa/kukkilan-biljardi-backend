@@ -65,26 +65,25 @@ impl CalendarsService {
             }
         }
 
-        match self
+        let update_result = self
             .repository
             .update(id, request.name.as_deref(), request.active)
-            .await
-        {
+            .await;
+
+        match update_result {
             Ok(_rows_affected) => {
-                if let Some(row) = self.repository.get_by_id(id).await? {
-                    Ok(row)
-                } else {
-                    Err(AppError::NotFound("Calendar not found"))
-                }
+                let row = self.repository.get_by_id(id).await?;
+                row.ok_or(AppError::NotFound("Calendar not found"))
             }
-            Err(sqlx::Error::Database(db_err)) => {
-                if db_err.code().as_deref() == Some("1062") {
-                    Err(AppError::Conflict("Calendar name is already in use"))
-                } else {
-                    Err(AppError::Database(sqlx::Error::Database(db_err)))
-                }
+            Err(sqlx::Error::Database(database_error))
+                if database_error.code().as_deref() == Some("1062") =>
+            {
+                Err(AppError::Conflict("Calendar name is already in use"))
             }
-            Err(e) => Err(AppError::Database(e)),
+            Err(sqlx::Error::Database(database_error)) => {
+                Err(AppError::Database(sqlx::Error::Database(database_error)))
+            }
+            Err(error) => Err(AppError::Database(error)),
         }
     }
 }
