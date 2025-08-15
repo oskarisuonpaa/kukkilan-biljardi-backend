@@ -2,6 +2,7 @@ mod config;
 mod error;
 mod features;
 mod infrastructure;
+mod response;
 mod state;
 
 use axum::Router;

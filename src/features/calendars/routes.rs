@@ -10,6 +10,7 @@ use crate::{
         data_transfer_objects::{CalendarResponse, CreateCalendarRequest, UpdateCalendarRequest},
         model::CalendarRow,
     },
+    response::Created,
     state::AppState,
 };
 
@@ -35,9 +36,13 @@ async fn get_by_id(
 async fn create(
     State(state): State<AppState>,
     Json(body): Json<CreateCalendarRequest>,
-) -> Result<Json<CalendarResponse>, AppError> {
+) -> Result<Created<CalendarResponse>, AppError> {
     let row = state.calendars.create(body).await?;
-    Ok(Json(row_to_response(row)))
+
+    Ok(Created {
+        location: format!("/api/calendars/{}", row.id),
+        body: row_to_response(row),
+    })
 }
 
 async fn update(

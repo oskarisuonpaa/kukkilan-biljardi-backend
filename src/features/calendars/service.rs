@@ -40,7 +40,7 @@ impl CalendarsService {
             .repository
             .get_by_id(id)
             .await?
-            .ok_or_else(|| AppError::Database(sqlx::Error::RowNotFound))?;
+            .ok_or(AppError::NotFound("Failed to fetch newly created calendar"))?;
 
         Ok(row)
     }
