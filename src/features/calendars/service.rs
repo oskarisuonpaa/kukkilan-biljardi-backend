@@ -86,4 +86,18 @@ impl CalendarsService {
             Err(error) => Err(AppError::Database(error)),
         }
     }
+
+    pub async fn delete(&self, id: u64) -> Result<(), AppError> {
+        let n = self
+            .repository
+            .delete(id)
+            .await
+            .map_err(AppError::Database)?;
+
+        if n == false {
+            Err(AppError::NotFound("Calendar not found"))
+        } else {
+            Ok(())
+        }
+    }
 }

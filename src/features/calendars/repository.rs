@@ -9,7 +9,7 @@ pub trait CalendarsRepository: Send + Sync {
     async fn get_by_name(&self, name: &str) -> sqlx::Result<Option<CalendarRow>>;
     async fn insert(&self, name: &str, active: bool) -> sqlx::Result<u64>;
     async fn update(&self, id: u64, name: Option<&str>, active: Option<bool>) -> sqlx::Result<u64>;
-    // async fn delete(&self, id: u64) -> sqlx::Result<bool>;
+    async fn delete(&self, id: u64) -> sqlx::Result<bool>;
 }
 
 pub type DynamicCalendarsRepository = std::sync::Arc<dyn CalendarsRepository>;
@@ -103,7 +103,16 @@ impl CalendarsRepository for MySqlCalendarsRepository {
 
         query_builder.push(" WHERE id = ").push_bind(id);
 
-        let res = query_builder.build().execute(&self.pool).await?;
-        Ok(res.rows_affected())
+        let result = query_builder.build().execute(&self.pool).await?;
+
+        Ok(result.rows_affected())
+    }
+
+    async fn delete(&self, id: u64) -> sqlx::Result<bool> {
+        let result = sqlx::query!(r#"DELETE FROM calendars WHERE id = ?"#, id)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(result.rows_affected() > 0)
     }
 }

@@ -17,7 +17,10 @@ use crate::{
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/api/calendars", get(list).post(create))
-        .route("/api/calendars/{id}", get(get_by_id).put(update))
+        .route(
+            "/api/calendars/{id}",
+            get(get_by_id).put(update).delete(delete),
+        )
 }
 
 async fn list(State(state): State<AppState>) -> Result<Json<Vec<CalendarResponse>>, AppError> {
@@ -51,6 +54,11 @@ async fn update(
     Json(body): Json<UpdateCalendarRequest>,
 ) -> Result<NoContent, AppError> {
     state.calendars.update(id, body).await?;
+    Ok(NoContent)
+}
+
+async fn delete(State(state): State<AppState>, Path(id): Path<u64>) -> Result<NoContent, AppError> {
+    state.calendars.delete(id).await?;
     Ok(NoContent)
 }
 
