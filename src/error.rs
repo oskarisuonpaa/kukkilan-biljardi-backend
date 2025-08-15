@@ -13,6 +13,8 @@ pub enum AppError {
     Conflict(&'static str),
     #[error("{0}")]
     NotFound(&'static str),
+    #[error("{0}")]
+    BadRequest(&'static str),
 }
 
 impl IntoResponse for AppError {
@@ -21,6 +23,7 @@ impl IntoResponse for AppError {
             AppError::Database(_) => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
             AppError::Conflict(_) => (StatusCode::CONFLICT, self.to_string()),
             AppError::NotFound(_) => (StatusCode::NOT_FOUND, self.to_string()),
+            AppError::BadRequest(_) => (StatusCode::BAD_REQUEST, self.to_string()),
         };
         (status, Json(serde_json::json!({ "error": msg }))).into_response()
     }

@@ -1,6 +1,6 @@
 use super::model::CalendarRow;
 use async_trait::async_trait;
-use sqlx::{MySql, Pool};
+use sqlx::{MySql, Pool, QueryBuilder};
 
 #[async_trait]
 pub trait CalendarsRepository: Send + Sync {
@@ -8,8 +8,7 @@ pub trait CalendarsRepository: Send + Sync {
     async fn get_by_id(&self, id: u64) -> sqlx::Result<Option<CalendarRow>>;
     async fn get_by_name(&self, name: &str) -> sqlx::Result<Option<CalendarRow>>;
     async fn insert(&self, name: &str, active: bool) -> sqlx::Result<u64>;
-    async fn update(&self, id: u64, name: Option<&str>, active: Option<bool>)
-    -> sqlx::Result<bool>;
+    async fn update(&self, id: u64, name: Option<&str>, active: Option<bool>) -> sqlx::Result<u64>;
     // async fn delete(&self, id: u64) -> sqlx::Result<bool>;
 }
 
@@ -87,42 +86,24 @@ impl CalendarsRepository for MySqlCalendarsRepository {
         Ok(response.last_insert_id())
     }
 
-    async fn update(
-        &self,
-        id: u64,
-        name: Option<&str>,
-        active: Option<bool>,
-    ) -> sqlx::Result<bool> {
-        let mut sql = String::from("UPDATE calendars SET ");
-        let mut set_parts = vec![];
-
-        if name.is_some() {
-            set_parts.push("name = ?");
-        }
-        if active.is_some() {
-            set_parts.push("active = ?");
+    async fn update(&self, id: u64, name: Option<&str>, active: Option<bool>) -> sqlx::Result<u64> {
+        if name.is_none() && active.is_none() {
+            return Ok(0);
         }
 
-        if set_parts.is_empty() {
-            return Ok(false);
-        }
-
-        sql.push_str(&set_parts.join(", "));
-        sql.push_str(" WHERE id = ?");
-
-        let mut query = sqlx::query(&sql);
+        let mut query_builder = QueryBuilder::<MySql>::new("UPDATE calendars SET ");
+        let mut set = query_builder.separated(", ");
 
         if let Some(name) = name {
-            query = query.bind(name);
+            set.push("name = ").push_bind(name);
         }
-
         if let Some(active) = active {
-            query = query.bind(active);
+            set.push("active = ").push_bind(active);
         }
 
-        query = query.bind(id);
+        query_builder.push(" WHERE id = ").push_bind(id);
 
-        let res = query.execute(&self.pool).await?;
-        Ok(res.rows_affected() > 0)
+        let res = query_builder.build().execute(&self.pool).await?;
+        Ok(res.rows_affected())
     }
 }

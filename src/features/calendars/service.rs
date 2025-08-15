@@ -22,10 +22,13 @@ impl CalendarsService {
     }
 
     pub async fn get_by_id(&self, id: u64) -> Result<CalendarRow, AppError> {
-        match self.repository.get_by_id(id).await? {
-            Some(row) => Ok(row),
-            None => Err(AppError::NotFound("Calendar not found".into())),
-        }
+        let row = self
+            .repository
+            .get_by_id(id)
+            .await?
+            .ok_or(AppError::NotFound("Calendar not found".into()))?;
+
+        Ok(row)
     }
 
     pub async fn create(&self, request: CreateCalendarRequest) -> Result<CalendarRow, AppError> {
@@ -50,21 +53,38 @@ impl CalendarsService {
         id: u64,
         request: UpdateCalendarRequest,
     ) -> Result<CalendarRow, AppError> {
-        if self.repository.get_by_id(id).await?.is_none() {
-            return Err(AppError::NotFound("Calendar not found".into()));
+        if request.name.is_none() && request.active.is_none() {
+            return Err(AppError::BadRequest("No fields provided"));
         }
 
-        let updated = self
+        if let Some(ref new_name) = request.name {
+            if let Some(existing) = self.repository.get_by_name(new_name).await? {
+                if existing.id != id {
+                    return Err(AppError::Conflict("Calendar name is already in use"));
+                }
+            }
+        }
+
+        match self
             .repository
             .update(id, request.name.as_deref(), request.active)
-            .await?;
-
-        if updated {
-            Ok(self.get_by_id(id).await?)
-        } else {
-            Err(AppError::Database(sqlx::Error::InvalidArgument(
-                "No arguments given".into(),
-            )))
+            .await
+        {
+            Ok(_rows_affected) => {
+                if let Some(row) = self.repository.get_by_id(id).await? {
+                    Ok(row)
+                } else {
+                    Err(AppError::NotFound("Calendar not found"))
+                }
+            }
+            Err(sqlx::Error::Database(db_err)) => {
+                if db_err.code().as_deref() == Some("1062") {
+                    Err(AppError::Conflict("Calendar name is already in use"))
+                } else {
+                    Err(AppError::Database(sqlx::Error::Database(db_err)))
+                }
+            }
+            Err(e) => Err(AppError::Database(e)),
         }
     }
 }

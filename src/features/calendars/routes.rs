@@ -1,6 +1,7 @@
 use axum::{
     Json, Router,
     extract::{Path, State},
+    http::StatusCode,
     routing::get,
 };
 
@@ -49,9 +50,9 @@ async fn update(
     State(state): State<AppState>,
     Path(id): Path<u64>,
     Json(body): Json<UpdateCalendarRequest>,
-) -> Result<Json<CalendarResponse>, AppError> {
-    let row = state.calendars.update(id, body).await?;
-    Ok(Json(row_to_response(row)))
+) -> Result<StatusCode, AppError> {
+    state.calendars.update(id, body).await?;
+    Ok(StatusCode::NO_CONTENT)
 }
 
 fn row_to_response(row: CalendarRow) -> CalendarResponse {
