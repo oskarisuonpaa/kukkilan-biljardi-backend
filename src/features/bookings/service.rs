@@ -11,7 +11,7 @@ impl BookingsService {
         Self { repository }
     }
 
-    pub async fn list(&self, calendar_id: u64) -> Result<Vec<BookingRow>, AppError> {
+    pub async fn list(&self, calendar_id: u32) -> Result<Vec<BookingRow>, AppError> {
         Ok(self.repository.list(calendar_id).await?)
     }
 }

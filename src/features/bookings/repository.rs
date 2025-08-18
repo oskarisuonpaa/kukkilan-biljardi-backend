@@ -4,7 +4,7 @@ use sqlx::{MySql, Pool};
 
 #[async_trait]
 pub trait BookingsRepository: Send + Sync {
-    async fn list(&self, calendar_id: u64) -> sqlx::Result<Vec<BookingRow>>;
+    async fn list(&self, calendar_id: u32) -> sqlx::Result<Vec<BookingRow>>;
 }
 
 pub type DynamicBookingsRepository = std::sync::Arc<dyn BookingsRepository>;
@@ -21,7 +21,7 @@ impl MySqlBookingsRepository {
 
 #[async_trait]
 impl BookingsRepository for MySqlBookingsRepository {
-    async fn list(&self, calendar_id: u64) -> sqlx::Result<Vec<BookingRow>> {
+    async fn list(&self, calendar_id: u32) -> sqlx::Result<Vec<BookingRow>> {
         let rows = sqlx::query!(
             r#"SELECT * FROM bookings WHERE calendar_id = ?"#,
             calendar_id
@@ -34,14 +34,14 @@ impl BookingsRepository for MySqlBookingsRepository {
             .map(|row| BookingRow {
                 id: row.id,
                 calendar_id: row.calendar_id,
-                name: row.name,
-                email: row.email,
-                phone: row.phone,
-                //details: row.details,
-                //start: row.start.naive_utc(),
-                //end: row.end.naive_utc(),
-                created_at: row.created_at.naive_utc(),
-                //updated_at: row.updated_at.naive_utc(),
+                starts_at_utc: row.starts_at_utc.clone(),
+                ends_at_utc: row.ends_at_utc.clone(),
+                customer_name: row.customer_name,
+                customer_email: row.customer_email,
+                customer_phone: row.customer_phone,
+                customer_notes: row.customer_notes,
+                created_at: row.created_at.clone(),
+                updated_at: row.updated_at.clone(),
             })
             .collect())
     }
