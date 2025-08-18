@@ -1,0 +1,17 @@
+services:
+  db:
+    image: mysql:8.3
+    container_name: snooker-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: snooker
+      MYSQL_USER: app
+      MYSQL_PASSWORD: app
+    ports:
+      - "3306:3306"
+    command: ["--default-authentication-plugin=mysql_native_password"]
+    volumes:
+      - dbdata:/var/lib/mysql
+volumes:
+  dbdata:

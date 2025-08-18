@@ -1,17 +1,16 @@
+use super::{
+    data_transfer_objects::{CalendarResponse, CreateCalendarRequest, UpdateCalendarRequest},
+    model::CalendarRow,
+};
+use crate::{
+    error::AppError,
+    response::{Created, NoContent},
+    state::AppState,
+};
 use axum::{
     Json, Router,
     extract::{Path, State},
     routing::get,
-};
-
-use crate::{
-    error::AppError,
-    features::calendars::{
-        data_transfer_objects::{CalendarResponse, CreateCalendarRequest, UpdateCalendarRequest},
-        model::CalendarRow,
-    },
-    response::{Created, NoContent},
-    state::AppState,
 };
 
 pub fn routes() -> Router<AppState> {
@@ -30,7 +29,7 @@ async fn list(State(state): State<AppState>) -> Result<Json<Vec<CalendarResponse
 
 async fn get_by_id(
     State(state): State<AppState>,
-    Path(id): Path<u64>,
+    Path(id): Path<u32>,
 ) -> Result<Json<CalendarResponse>, AppError> {
     let row = state.calendars.get_by_id(id).await?;
     Ok(Json(row_to_response(row)))
@@ -50,14 +49,14 @@ async fn create(
 
 async fn update(
     State(state): State<AppState>,
-    Path(id): Path<u64>,
+    Path(id): Path<u32>,
     Json(body): Json<UpdateCalendarRequest>,
 ) -> Result<NoContent, AppError> {
     state.calendars.update(id, body).await?;
     Ok(NoContent)
 }
 
-async fn delete(State(state): State<AppState>, Path(id): Path<u64>) -> Result<NoContent, AppError> {
+async fn delete(State(state): State<AppState>, Path(id): Path<u32>) -> Result<NoContent, AppError> {
     state.calendars.delete(id).await?;
     Ok(NoContent)
 }

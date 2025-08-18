@@ -21,7 +21,7 @@ impl CalendarsService {
         Ok(self.repository.list().await?)
     }
 
-    pub async fn get_by_id(&self, id: u64) -> Result<CalendarRow, AppError> {
+    pub async fn get_by_id(&self, id: u32) -> Result<CalendarRow, AppError> {
         let row = self
             .repository
             .get_by_id(id)
@@ -50,7 +50,7 @@ impl CalendarsService {
 
     pub async fn update(
         &self,
-        id: u64,
+        id: u32,
         request: UpdateCalendarRequest,
     ) -> Result<CalendarRow, AppError> {
         if request.name.is_none() && request.active.is_none() {
@@ -87,7 +87,7 @@ impl CalendarsService {
         }
     }
 
-    pub async fn delete(&self, id: u64) -> Result<(), AppError> {
+    pub async fn delete(&self, id: u32) -> Result<(), AppError> {
         let n = self
             .repository
             .delete(id)

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize)]
 pub struct CalendarResponse {
-    pub id: u64,
+    pub id: u32,
     pub name: String,
 }
 

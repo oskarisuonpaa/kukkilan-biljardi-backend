@@ -23,6 +23,7 @@ async fn main() {
 
     let app = Router::new()
         .merge(features::calendars::routes())
+        .merge(features::bookings::routes())
         .with_state(app_state);
 
     let address = std::net::SocketAddr::from(([0, 0, 0, 0], config.port));

@@ -1,0 +1,13 @@
+CREATE TABLE IF NOT EXISTS bookings(
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    calendar_id INT UNSIGNED NOT NULL,
+    starts_at_utc DATETIME(6) NOT NULL,
+    ends_at_utc DATETIME(6) NOT NULL,
+    customer_name VARCHAR(255) NOT NULL,
+    customer_email VARCHAR(255) NOT NULL,
+    customer_phone VARCHAR(255) NOT NULL,
+    customer_notes TEXT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    CONSTRAINT fk_bookings_calendar FOREIGN KEY (calendar_id) REFERENCES calendars(id) ON DELETE CASCADE
+);
