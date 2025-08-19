@@ -29,5 +29,17 @@ impl BookingsService {
         Ok(row)
     }
 
-    // TODO: DELETE
+    pub async fn delete(&self, id: u32) -> Result<(), AppError> {
+        let n = self
+            .repository
+            .delete(id)
+            .await
+            .map_err(AppError::Database)?;
+
+        if n == false {
+            Err(AppError::NotFound("Booking not found"))
+        } else {
+            Ok(())
+        }
+    }
 }

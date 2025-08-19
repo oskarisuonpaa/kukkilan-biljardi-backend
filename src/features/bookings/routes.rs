@@ -2,7 +2,7 @@ use super::data_transfer_objects::BookingResponse;
 use crate::{
     error::AppError,
     features::bookings::{data_transfer_objects::CreateBookingRequest, model::BookingRow},
-    response::Created,
+    response::{Created, NoContent},
     state::AppState,
 };
 use axum::{
@@ -14,7 +14,7 @@ use axum::{
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/api/calendar/{calendar_id}/bookings", get(list))
-        .route("/api/bookings/", post(create))
+        .route("/api/bookings/", post(create).delete(delete))
 }
 
 async fn list(
@@ -35,6 +35,11 @@ async fn create(
         location: format!("/api/bookings/{}", row.id),
         body: row_to_response(row),
     })
+}
+
+async fn delete(State(state): State<AppState>, Path(id): Path<u32>) -> Result<NoContent, AppError> {
+    state.bookings.delete(id).await?;
+    Ok(NoContent)
 }
 
 fn row_to_response(row: BookingRow) -> BookingResponse {
