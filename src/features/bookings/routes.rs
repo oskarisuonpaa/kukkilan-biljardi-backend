@@ -1,13 +1,20 @@
 use super::data_transfer_objects::BookingResponse;
-use crate::{error::AppError, features::bookings::model::BookingRow, state::AppState};
+use crate::{
+    error::AppError,
+    features::bookings::{data_transfer_objects::CreateBookingRequest, model::BookingRow},
+    response::Created,
+    state::AppState,
+};
 use axum::{
     Json, Router,
     extract::{Path, State},
-    routing::get,
+    routing::{get, post},
 };
 
 pub fn routes() -> Router<AppState> {
-    Router::new().route("/api/calendar/{calendar_id}/bookings", get(list))
+    Router::new()
+        .route("/api/calendar/{calendar_id}/bookings", get(list))
+        .route("/api/bookings/", post(create))
 }
 
 async fn list(
@@ -16,6 +23,18 @@ async fn list(
 ) -> Result<Json<Vec<BookingResponse>>, AppError> {
     let rows = state.bookings.list(calendar_id).await?;
     Ok(Json(rows.into_iter().map(row_to_response).collect()))
+}
+
+async fn create(
+    State(state): State<AppState>,
+    Json(body): Json<CreateBookingRequest>,
+) -> Result<Created<BookingResponse>, AppError> {
+    let row = state.bookings.create(body).await?;
+
+    Ok(Created {
+        location: format!("/api/bookings/{}", row.id),
+        body: row_to_response(row),
+    })
 }
 
 fn row_to_response(row: BookingRow) -> BookingResponse {
