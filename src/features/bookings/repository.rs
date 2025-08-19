@@ -8,6 +8,7 @@ use sqlx::{MySql, Pool};
 pub trait BookingsRepository: Send + Sync {
     async fn list(&self, calendar_id: u32) -> sqlx::Result<Vec<BookingRow>>;
     async fn insert(&self, data: CreateBookingRequest) -> sqlx::Result<u32>;
+    async fn delete(&self, id: u32) -> sqlx::Result<bool>;
 }
 
 pub type DynamicBookingsRepository = std::sync::Arc<dyn BookingsRepository>;
@@ -50,7 +51,7 @@ impl BookingsRepository for MySqlBookingsRepository {
     }
 
     async fn insert(&self, data: CreateBookingRequest) -> sqlx::Result<u32> {
-        let response = sqlx::query!(
+        let result = sqlx::query!(
             r#"INSERT INTO bookings (calendar_id, starts_at_utc, ends_at_utc, customer_name, customer_email, customer_phone, customer_notes) VALUES (?,?,?,?,?,?,?)"#,
             data.calendar_id,
             data.start,
@@ -63,6 +64,14 @@ impl BookingsRepository for MySqlBookingsRepository {
         .execute(&self.pool)
         .await?;
 
-        Ok(response.last_insert_id() as u32)
+        Ok(result.last_insert_id() as u32)
+    }
+
+    async fn delete(&self, id: u32) -> sqlx::Result<bool> {
+        let result = sqlx::query!(r#"DELETE FROM bookings WHERE id = ?"#, id)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(result.rows_affected() > 0)
     }
 }
