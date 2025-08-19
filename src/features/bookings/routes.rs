@@ -25,6 +25,7 @@ fn row_to_response(row: BookingRow) -> BookingResponse {
         name: row.customer_name,
         email: row.customer_email,
         phone: row.customer_phone,
+        notes: row.customer_notes,
         start: row.starts_at_utc.clone(),
         end: row.ends_at_utc.clone(),
     }
