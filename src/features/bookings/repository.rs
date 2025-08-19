@@ -1,3 +1,5 @@
+use crate::features::bookings::data_transfer_objects::CreateBookingRequest;
+
 use super::model::BookingRow;
 use async_trait::async_trait;
 use sqlx::{MySql, Pool};
@@ -5,6 +7,7 @@ use sqlx::{MySql, Pool};
 #[async_trait]
 pub trait BookingsRepository: Send + Sync {
     async fn list(&self, calendar_id: u32) -> sqlx::Result<Vec<BookingRow>>;
+    async fn insert(&self, data: CreateBookingRequest) -> sqlx::Result<u32>;
 }
 
 pub type DynamicBookingsRepository = std::sync::Arc<dyn BookingsRepository>;
@@ -44,5 +47,22 @@ impl BookingsRepository for MySqlBookingsRepository {
                 updated_at: row.updated_at.clone(),
             })
             .collect())
+    }
+
+    async fn insert(&self, data: CreateBookingRequest) -> sqlx::Result<u32> {
+        let response = sqlx::query!(
+            r#"INSERT INTO bookings (calendar_id, starts_at_utc, ends_at_utc, customer_name, customer_email, customer_phone, customer_notes) VALUES (?,?,?,?,?,?,?)"#,
+            data.calendar_id,
+            data.start,
+            data.end,
+            data.name,
+            data.email,
+            data.phone,
+            data.notes
+        )
+        .execute(&self.pool)
+        .await?;
+
+        Ok(response.last_insert_id() as u32)
     }
 }
