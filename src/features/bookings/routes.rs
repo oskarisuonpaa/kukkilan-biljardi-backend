@@ -14,7 +14,8 @@ use axum::{
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/api/calendar/{calendar_id}/bookings", get(list))
-        .route("/api/bookings", post(create).delete(delete))
+        .route("/api/bookings", post(create))
+        .route("/api/bookings/{id}", axum::routing::delete(delete))
 }
 
 async fn list(
