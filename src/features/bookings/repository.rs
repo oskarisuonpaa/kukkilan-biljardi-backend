@@ -71,11 +71,14 @@ impl BookingsRepository for MySqlBookingsRepository {
     }
 
     async fn insert(&self, data: CreateBookingRequest) -> sqlx::Result<u32> {
+        let start = data.start.naive_utc();
+        let end = data.end.naive_utc();
+
         let result = sqlx::query!(
             r#"INSERT INTO bookings (calendar_id, starts_at_utc, ends_at_utc, customer_name, customer_email, customer_phone, customer_notes) VALUES (?,?,?,?,?,?,?)"#,
             data.calendar_id,
-            data.start,
-            data.end,
+            start,
+            end,
             data.name,
             data.email,
             data.phone,

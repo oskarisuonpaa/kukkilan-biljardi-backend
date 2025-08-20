@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize)]
@@ -20,6 +20,6 @@ pub struct CreateBookingRequest {
     pub email: String,
     pub phone: String,
     pub notes: Option<String>,
-    pub start: NaiveDateTime,
-    pub end: NaiveDateTime,
+    pub start: DateTime<Utc>,
+    pub end: DateTime<Utc>,
 }
