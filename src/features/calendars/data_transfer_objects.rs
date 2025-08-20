@@ -10,7 +10,7 @@ pub struct CalendarResponse {
 #[derive(Debug, Deserialize)]
 pub struct CreateCalendarRequest {
     pub name: String,
-    pub active: bool,
+    pub active: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
