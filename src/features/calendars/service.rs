@@ -36,7 +36,7 @@ impl CalendarsService {
             return Err(AppError::Conflict("Calendar name is already in use"));
         }
 
-        let active = request.active.unwrap_or(true);
+        let active = request.active;
         let id = self.repository.insert(&request.name, active).await?;
 
         let row = self

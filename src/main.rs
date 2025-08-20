@@ -5,9 +5,10 @@ mod infrastructure;
 mod response;
 mod state;
 
-use axum::Router;
+use axum::{Router, http::HeaderValue};
 use config::AppConfig;
 use infrastructure::database::connect;
+use tower_http::cors::{Any, CorsLayer};
 
 use crate::{infrastructure::database::run_migrations, state::AppState};
 
@@ -21,10 +22,16 @@ async fn main() {
 
     let app_state = AppState::new(config.clone(), pool);
 
+    let cors = CorsLayer::new()
+        .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
+        .allow_methods(Any)
+        .allow_headers(Any);
+
     let app = Router::new()
         .merge(features::calendars::routes())
         .merge(features::bookings::routes())
-        .with_state(app_state);
+        .with_state(app_state)
+        .layer(cors);
 
     let address = std::net::SocketAddr::from(([0, 0, 0, 0], config.port));
     println!("Listening on http://{address}");

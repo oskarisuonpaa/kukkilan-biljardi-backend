@@ -65,5 +65,6 @@ fn row_to_response(row: CalendarRow) -> CalendarResponse {
     CalendarResponse {
         id: row.id,
         name: row.name,
+        active: row.active,
     }
 }
