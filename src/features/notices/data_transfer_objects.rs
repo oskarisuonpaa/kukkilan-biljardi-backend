@@ -19,5 +19,5 @@ pub struct CreateNoticeRequest {
 pub struct UpdateNoticeRequest {
     pub title: Option<String>,
     pub content: Option<String>,
-    pub is_active: Option<bool>,
+    pub active: Option<bool>,
 }
