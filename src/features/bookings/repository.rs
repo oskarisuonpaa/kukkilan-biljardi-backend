@@ -28,7 +28,15 @@ impl MySqlBookingsRepository {
 impl BookingsRepository for MySqlBookingsRepository {
     async fn list(&self, calendar_id: u32) -> sqlx::Result<Vec<BookingRow>> {
         let rows = sqlx::query!(
-            r#"SELECT * FROM bookings WHERE calendar_id = ?"#,
+            r#"
+            SELECT
+                id, calendar_id, starts_at_utc, ends_at_utc,
+                customer_name, customer_email, customer_phone, customer_notes,
+                created_at, updated_at
+            FROM bookings
+            WHERE calendar_id = ?
+            ORDER BY starts_at_utc
+            "#,
             calendar_id
         )
         .fetch_all(&self.pool)
@@ -52,9 +60,19 @@ impl BookingsRepository for MySqlBookingsRepository {
     }
 
     async fn get(&self, id: u32) -> sqlx::Result<Option<BookingRow>> {
-        let row = sqlx::query!(r#"SELECT * FROM bookings WHERE id = ?"#, id)
-            .fetch_optional(&self.pool)
-            .await?;
+        let row = sqlx::query!(
+            r#"
+            SELECT
+                id, calendar_id, starts_at_utc, ends_at_utc,
+                customer_name, customer_email, customer_phone, customer_notes,
+                created_at, updated_at
+            FROM bookings
+            WHERE id = ?
+            "#,
+            id
+        )
+        .fetch_optional(&self.pool)
+        .await?;
 
         Ok(row.map(|row| BookingRow {
             id: row.id,

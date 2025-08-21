@@ -10,6 +10,7 @@ use crate::{
 use axum::{
     Json, Router,
     extract::{Path, State},
+    http::StatusCode,
     routing::get,
 };
 
@@ -51,9 +52,9 @@ async fn update(
     State(state): State<AppState>,
     Path(id): Path<u32>,
     Json(body): Json<UpdateCalendarRequest>,
-) -> Result<NoContent, AppError> {
-    state.calendars.update(id, body).await?;
-    Ok(NoContent)
+) -> Result<(StatusCode, Json<CalendarRow>), AppError> {
+    let row = state.calendars.update(id, body).await?;
+    Ok((StatusCode::OK, Json(row)))
 }
 
 async fn delete(State(state): State<AppState>, Path(id): Path<u32>) -> Result<NoContent, AppError> {

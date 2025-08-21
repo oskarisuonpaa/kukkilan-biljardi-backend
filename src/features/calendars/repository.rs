@@ -1,6 +1,6 @@
 use super::model::CalendarRow;
 use async_trait::async_trait;
-use sqlx::{MySql, Pool, QueryBuilder};
+use sqlx::{MySql, Pool};
 
 #[async_trait]
 pub trait CalendarsRepository: Send + Sync {
@@ -88,21 +88,22 @@ impl CalendarsRepository for MySqlCalendarsRepository {
             return Ok(0);
         }
 
-        let mut query_builder = QueryBuilder::<MySql>::new("UPDATE calendars SET ");
-        let mut set = query_builder.separated(", ");
+        let res = sqlx::query!(
+            r#"
+            UPDATE calendars
+            SET
+                name   = COALESCE(?, name),
+                active = COALESCE(?, active)
+            WHERE id = ?
+            "#,
+            name,   // Option<&str> → NULL means "keep existing"
+            active, // Option<bool> → NULL means "keep existing"
+            id
+        )
+        .execute(&self.pool)
+        .await?;
 
-        if let Some(name) = name {
-            set.push("name = ").push_bind(name);
-        }
-        if let Some(active) = active {
-            set.push("active = ").push_bind(active);
-        }
-
-        query_builder.push(" WHERE id = ").push_bind(id);
-
-        let result = query_builder.build().execute(&self.pool).await?;
-
-        Ok(result.rows_affected() as u32)
+        Ok(res.rows_affected() as u32)
     }
 
     async fn delete(&self, id: u32) -> sqlx::Result<bool> {
