@@ -22,16 +22,6 @@ impl NoticesService {
         Ok(self.repository.list().await?)
     }
 
-    pub async fn get_by_id(&self, notice_id: u32) -> Result<NoticeRow, AppError> {
-        let notice_row = self
-            .repository
-            .get_by_id(notice_id)
-            .await?
-            .ok_or(AppError::NotFound("Notice not found"))?;
-
-        Ok(notice_row)
-    }
-
     pub async fn create(&self, request: CreateNoticeRequest) -> Result<NoticeRow, AppError> {
         let is_active = request.active;
         let new_notice_id = self

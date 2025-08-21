@@ -17,46 +17,57 @@ use crate::{
 
 pub fn routes() -> Router<AppState> {
     Router::new()
-        .route("/api/notices", get(list).post(create))
-        .route("/api/notices/{id}", put(update).delete(delete))
+        .route("/api/notices", get(list_notices).post(create_notice))
+        .route(
+            "/api/notices/{id}",
+            put(update_notice).delete(delete_notice),
+        )
 }
 
-async fn list(State(state): State<AppState>) -> Result<Json<Vec<NoticeResponse>>, AppError> {
-    let rows = state.notices.list().await?;
-    Ok(Json(rows.into_iter().map(row_to_response).collect()))
+async fn list_notices(
+    State(app_state): State<AppState>,
+) -> Result<Json<Vec<NoticeResponse>>, AppError> {
+    let notice_rows = app_state.notices.list().await?;
+    let responses = notice_rows
+        .into_iter()
+        .map(convert_row_to_response)
+        .collect();
+    Ok(Json(responses))
 }
 
-async fn create(
-    State(state): State<AppState>,
-    Json(body): Json<CreateNoticeRequest>,
+async fn create_notice(
+    State(app_state): State<AppState>,
+    Json(request_body): Json<CreateNoticeRequest>,
 ) -> Result<Created<NoticeResponse>, AppError> {
-    let row = state.notices.create(body).await?;
-
+    let notice_row = app_state.notices.create(request_body).await?;
     Ok(Created {
-        location: format!("/api/notices/{}", row.id),
-        body: row_to_response(row),
+        location: format!("/api/notices/{}", notice_row.id),
+        body: convert_row_to_response(notice_row),
     })
 }
 
-async fn update(
-    State(state): State<AppState>,
-    Path(id): Path<u32>,
-    Json(body): Json<UpdateNoticeRequest>,
+async fn update_notice(
+    State(app_state): State<AppState>,
+    Path(notice_id): Path<u32>,
+    Json(request_body): Json<UpdateNoticeRequest>,
 ) -> Result<(StatusCode, Json<NoticeRow>), AppError> {
-    let row = state.notices.update(id, body).await?;
-    Ok((StatusCode::OK, Json(row)))
+    let updated_row = app_state.notices.update(notice_id, request_body).await?;
+    Ok((StatusCode::OK, Json(updated_row)))
 }
 
-async fn delete(State(state): State<AppState>, Path(id): Path<u32>) -> Result<NoContent, AppError> {
-    state.notices.delete(id).await?;
+async fn delete_notice(
+    State(app_state): State<AppState>,
+    Path(notice_id): Path<u32>,
+) -> Result<NoContent, AppError> {
+    app_state.notices.delete(notice_id).await?;
     Ok(NoContent)
 }
 
-fn row_to_response(row: NoticeRow) -> NoticeResponse {
+fn convert_row_to_response(notice_row: NoticeRow) -> NoticeResponse {
     NoticeResponse {
-        id: row.id,
-        title: row.title,
-        content: row.content,
-        active: row.active,
+        id: notice_row.id,
+        title: notice_row.title,
+        content: notice_row.content,
+        active: notice_row.active,
     }
 }
