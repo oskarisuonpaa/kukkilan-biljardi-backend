@@ -1,4 +1,10 @@
-use crate::{error::AppError, features::notices::model::NoticeRow};
+use crate::{
+    error::AppError,
+    features::notices::{
+        data_transfer_objects::{CreateNoticeRequest, UpdateNoticeRequest},
+        model::NoticeRow,
+    },
+};
 
 use super::repository::DynamicNoticesRepository;
 
@@ -15,74 +21,74 @@ impl NoticesService {
         Ok(self.repository.list().await?)
     }
 
-    // pub async fn get_by_id(&self, id: u32) -> Result<NoticeRow, AppError> {
-    //     let row = self
-    //         .repository
-    //         .get_by_id(id)
-    //         .await?
-    //         .ok_or(AppError::NotFound("Notice not found".into()))?;
+    pub async fn get_by_id(&self, id: u32) -> Result<NoticeRow, AppError> {
+        let row = self
+            .repository
+            .get_by_id(id)
+            .await?
+            .ok_or(AppError::NotFound("Notice not found".into()))?;
 
-    //     Ok(row)
-    // }
+        Ok(row)
+    }
 
-    // pub async fn create(&self, request: CreateNoticeRequest) -> Result<NoticeRow, AppError> {
-    //     let active = request.active;
-    //     let id = self
-    //         .repository
-    //         .insert(&request.title, &request.content, active)
-    //         .await?;
+    pub async fn create(&self, request: CreateNoticeRequest) -> Result<NoticeRow, AppError> {
+        let active = request.active;
+        let id = self
+            .repository
+            .insert(&request.title, &request.content, active)
+            .await?;
 
-    //     let row = self
-    //         .repository
-    //         .get_by_id(id)
-    //         .await?
-    //         .ok_or(AppError::NotFound("Failed to fetch newly created notice"))?;
+        let row = self
+            .repository
+            .get_by_id(id)
+            .await?
+            .ok_or(AppError::NotFound("Failed to fetch newly created notice"))?;
 
-    //     Ok(row)
-    // }
+        Ok(row)
+    }
 
-    // pub async fn update(
-    //     &self,
-    //     id: u32,
-    //     request: UpdateNoticeRequest,
-    // ) -> Result<NoticeRow, AppError> {
-    //     if request.title.is_none() && request.content.is_none() && request.active.is_none() {
-    //         return Err(AppError::BadRequest("No fields provided"));
-    //     }
+    pub async fn update(
+        &self,
+        id: u32,
+        request: UpdateNoticeRequest,
+    ) -> Result<NoticeRow, AppError> {
+        if request.title.is_none() && request.content.is_none() && request.active.is_none() {
+            return Err(AppError::BadRequest("No fields provided"));
+        }
 
-    //     let update_result = self
-    //         .repository
-    //         .update(
-    //             id,
-    //             request.title.as_deref(),
-    //             request.content.as_deref(),
-    //             request.active,
-    //         )
-    //         .await;
+        let update_result = self
+            .repository
+            .update(
+                id,
+                request.title.as_deref(),
+                request.content.as_deref(),
+                request.active,
+            )
+            .await;
 
-    //     match update_result {
-    //         Ok(_rows_affected) => {
-    //             let row = self.repository.get_by_id(id).await?;
-    //             row.ok_or(AppError::NotFound("Notice not found"))
-    //         }
-    //         Err(sqlx::Error::Database(database_error)) => {
-    //             Err(AppError::Database(sqlx::Error::Database(database_error)))
-    //         }
-    //         Err(error) => Err(AppError::Database(error)),
-    //     }
-    // }
+        match update_result {
+            Ok(_rows_affected) => {
+                let row = self.repository.get_by_id(id).await?;
+                row.ok_or(AppError::NotFound("Notice not found"))
+            }
+            Err(sqlx::Error::Database(database_error)) => {
+                Err(AppError::Database(sqlx::Error::Database(database_error)))
+            }
+            Err(error) => Err(AppError::Database(error)),
+        }
+    }
 
-    // pub async fn delete(&self, id: u32) -> Result<(), AppError> {
-    //     let n = self
-    //         .repository
-    //         .delete(id)
-    //         .await
-    //         .map_err(AppError::Database)?;
+    pub async fn delete(&self, id: u32) -> Result<(), AppError> {
+        let n = self
+            .repository
+            .delete(id)
+            .await
+            .map_err(AppError::Database)?;
 
-    //     if n == false {
-    //         Err(AppError::NotFound("Notice not found"))
-    //     } else {
-    //         Ok(())
-    //     }
-    // }
+        if n == false {
+            Err(AppError::NotFound("Notice not found"))
+        } else {
+            Ok(())
+        }
+    }
 }
