@@ -30,6 +30,7 @@ async fn main() {
     let app = Router::new()
         .merge(features::calendars::routes())
         .merge(features::bookings::routes())
+        .merge(features::notices::routes())
         .with_state(app_state)
         .layer(cors);
 

@@ -7,7 +7,7 @@ use crate::{
 };
 
 pub fn routes() -> Router<AppState> {
-    Router::new().route("/api/notices", get(list)) //.post(create))
+    Router::new().route("/api/notices", get(list)) //.post(create)
     // .route("/api/notices/{id}", put(update).delete(delete))
 }
 

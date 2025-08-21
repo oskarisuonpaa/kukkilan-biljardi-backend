@@ -43,7 +43,7 @@ impl NoticesRepository for MySqlNoticesRepository {
                 id: row.id,
                 title: row.title,
                 content: row.content,
-                active: row.active,
+                active: row.active != 0,
                 created_at: row.created_at.clone(),
             })
             .collect())
