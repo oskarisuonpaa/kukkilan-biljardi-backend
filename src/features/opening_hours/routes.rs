@@ -16,12 +16,12 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/api/opening-hours", get(list_hours))
         .route(
-            "/api/opening-hours/:weekday",
+            "/api/opening-hours/{weekday}",
             put(upsert_hour).delete(delete_hour),
         )
         .route("/api/opening-exceptions", get(list_exceptions))
         .route(
-            "/api/opening-exceptions/:date",
+            "/api/opening-exceptions/{date}",
             put(upsert_exception).delete(delete_exception),
         )
 }
