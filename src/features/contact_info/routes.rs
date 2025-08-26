@@ -1,9 +1,4 @@
-use axum::{
-    Json, Router,
-    extract::State,
-    http::StatusCode,
-    routing::{get, put},
-};
+use axum::{Json, Router, extract::State, http::StatusCode, routing::get};
 
 use crate::{
     error::AppError,
@@ -41,6 +36,5 @@ fn convert_row_to_response(row: ContactInfoRow) -> ContactInfoResponse {
         address: row.address,
         phone: row.phone,
         email: row.email,
-        updated_at: row.updated_at.format("%Y-%m-%dT%H:%M:%S").to_string(),
     }
 }

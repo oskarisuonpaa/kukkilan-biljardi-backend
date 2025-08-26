@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use chrono::{NaiveDate, NaiveTime};
 use sqlx::{MySql, Pool};
 
-use crate::features::opening::model::{OpeningExceptionRow, OpeningHourRow};
+use super::model::{OpeningExceptionRow, OpeningHourRow};
 
 // ---------- Traits ----------
 #[async_trait]
@@ -112,27 +112,27 @@ impl OpeningExceptionsRepository for MySqlOpeningExceptionsRepository {
         match (from, to) {
             (None, None) => sqlx::query_as!(
                 OpeningExceptionRow,
-                r#"SELECT id as `id: u32`, date, is_closed, opens_at, closes_at FROM opening_exceptions ORDER BY date"#
+                r#"SELECT id as `id: u32`, date, is_closed as `is_closed: bool`, opens_at, closes_at FROM opening_exceptions ORDER BY date"#
             )
             .fetch_all(&self.pool)
             .await,
             (Some(f), None) => sqlx::query_as!(
                 OpeningExceptionRow,
-                r#"SELECT id as `id: u32`, date, is_closed, opens_at, closes_at FROM opening_exceptions WHERE date >= ? ORDER BY date"#,
+                r#"SELECT id as `id: u32`, date, is_closed as `is_closed: bool`, opens_at, closes_at FROM opening_exceptions WHERE date >= ? ORDER BY date"#,
                 f
             )
             .fetch_all(&self.pool)
             .await,
             (None, Some(t)) => sqlx::query_as!(
                 OpeningExceptionRow,
-                r#"SELECT id as `id: u32`, date, is_closed, opens_at, closes_at FROM opening_exceptions WHERE date <= ? ORDER BY date"#,
+                r#"SELECT id as `id: u32`, date, is_closed as `is_closed: bool`, opens_at, closes_at FROM opening_exceptions WHERE date <= ? ORDER BY date"#,
                 t
             )
             .fetch_all(&self.pool)
             .await,
             (Some(f), Some(t)) => sqlx::query_as!(
                 OpeningExceptionRow,
-                r#"SELECT id as `id: u32`, date, is_closed, opens_at, closes_at FROM opening_exceptions WHERE date BETWEEN ? AND ? ORDER BY date"#,
+                r#"SELECT id as `id: u32`, date, is_closed as `is_closed: bool`, opens_at, closes_at FROM opening_exceptions WHERE date BETWEEN ? AND ? ORDER BY date"#,
                 f,
                 t
             )

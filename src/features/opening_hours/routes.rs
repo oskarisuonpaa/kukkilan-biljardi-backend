@@ -2,17 +2,15 @@ use axum::{
     Json, Router,
     extract::{Path, Query, State},
     http::StatusCode,
-    routing::{delete, get, put},
+    routing::{get, put},
 };
 
-use crate::{
-    error::AppError,
-    features::opening::{
-        data_transfer_objects as dto,
-        model::{OpeningExceptionRow, OpeningHourRow},
-    },
-    state::AppState,
+use super::{
+    data_transfer_objects as dto,
+    model::{OpeningExceptionRow, OpeningHourRow},
 };
+
+use crate::{error::AppError, state::AppState};
 
 pub fn routes() -> Router<AppState> {
     Router::new()

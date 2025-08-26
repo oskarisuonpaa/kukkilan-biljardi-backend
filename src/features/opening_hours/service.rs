@@ -1,7 +1,8 @@
 use chrono::{NaiveDate, NaiveTime};
 
+use super::repository::{DynOpeningExceptionsRepo, DynOpeningHoursRepo};
 use crate::error::AppError;
-use crate::features::opening::repository::{DynOpeningExceptionsRepo, DynOpeningHoursRepo};
+use crate::features::opening_hours::model::{OpeningExceptionRow, OpeningHourRow};
 
 #[derive(Clone)]
 pub struct OpeningHoursService {
@@ -12,9 +13,7 @@ impl OpeningHoursService {
         Self { repo }
     }
 
-    pub async fn list(
-        &self,
-    ) -> Result<Vec<crate::features::opening::model::OpeningHourRow>, AppError> {
+    pub async fn list(&self) -> Result<Vec<OpeningHourRow>, AppError> {
         Ok(self.repo.list().await?)
     }
 
@@ -56,7 +55,7 @@ impl OpeningExceptionsService {
         &self,
         from: Option<&str>,
         to: Option<&str>,
-    ) -> Result<Vec<crate::features::opening::model::OpeningExceptionRow>, AppError> {
+    ) -> Result<Vec<OpeningExceptionRow>, AppError> {
         let from_d = match from {
             Some(s) => Some(parse_date(s)?),
             None => None,

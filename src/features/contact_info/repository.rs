@@ -36,7 +36,7 @@ impl ContactInfoRepository for MySqlContactInfoRepository {
             address: row.address,
             phone: row.phone,
             email: row.email,
-            updated_at: row.updated_at,
+            updated_at: row.updated_at.naive_utc(),
         }))
     }
 

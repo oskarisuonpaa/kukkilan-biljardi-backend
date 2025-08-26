@@ -31,6 +31,8 @@ async fn main() {
         .merge(features::calendars::routes())
         .merge(features::bookings::routes())
         .merge(features::notices::routes())
+        .merge(features::opening_hours::routes())
+        .merge(features::contact_info::routes())
         .with_state(app_state)
         .layer(cors);
 
