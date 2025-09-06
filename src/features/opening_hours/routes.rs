@@ -19,9 +19,9 @@ pub fn routes() -> Router<AppState> {
             "/api/opening-hours/{weekday}",
             put(upsert_hour).delete(delete_hour),
         )
-        .route("/api/opening-exceptions", get(list_exceptions))
+        .route("/api/opening-hours/exceptions", get(list_exceptions))
         .route(
-            "/api/opening-exceptions/{date}",
+            "/api/opening-hours/exceptions/{date}",
             put(upsert_exception).delete(delete_exception),
         )
 }

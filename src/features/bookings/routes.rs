@@ -10,6 +10,7 @@ use axum::{
     extract::{Path, State},
     routing::{get, post},
 };
+use chrono::{DateTime, Utc};
 
 pub fn routes() -> Router<AppState> {
     Router::new()
@@ -51,7 +52,7 @@ fn row_to_response(row: BookingRow) -> BookingResponse {
         email: row.customer_email,
         phone: row.customer_phone,
         notes: row.customer_notes,
-        start: row.starts_at_utc.clone(),
-        end: row.ends_at_utc.clone(),
+        start: DateTime::<Utc>::from_naive_utc_and_offset(row.starts_at_utc, Utc),
+        end: DateTime::<Utc>::from_naive_utc_and_offset(row.ends_at_utc, Utc),
     }
 }
