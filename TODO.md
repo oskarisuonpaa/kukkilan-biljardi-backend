@@ -3,3 +3,6 @@
 - [x] Add delete
 - [ ] Testing
 - [ ] Validation
+- [ ] Add ability to upload images for table cards and page background
+- [ ] Encrypt customer database data
+- [ ] Add protection to admin routes
