@@ -21,83 +21,45 @@ impl CalendarsService {
         Ok(self.repository.list().await?)
     }
 
-    pub async fn get_by_id(&self, id: u32) -> Result<CalendarRow, AppError> {
-        let row = self
-            .repository
+    pub async fn get(&self, id: u32) -> Result<CalendarRow, AppError> {
+        self.repository
             .get_by_id(id)
             .await?
-            .ok_or(AppError::NotFound("Calendar not found".into()))?;
-
-        Ok(row)
+            .ok_or(AppError::NotFound("Calendar not found"))
     }
 
-    pub async fn create(&self, request: CreateCalendarRequest) -> Result<CalendarRow, AppError> {
-        if self.repository.get_by_name(&request.name).await?.is_some() {
-            return Err(AppError::Conflict("Calendar name is already in use"));
-        }
-
-        let active = request.active.unwrap_or(true);
-        let id = self.repository.insert(&request.name, active).await?;
-
-        let row = self
+    pub async fn create(&self, req: CreateCalendarRequest) -> Result<u32, AppError> {
+        let id = self
             .repository
-            .get_by_id(id)
-            .await?
-            .ok_or(AppError::NotFound("Failed to fetch newly created calendar"))?;
-
-        Ok(row)
+            .insert(&req.name, req.active.unwrap_or(true), req.thumbnail_id)
+            .await?;
+        Ok(id)
     }
 
-    pub async fn update(
-        &self,
-        id: u32,
-        request: UpdateCalendarRequest,
-    ) -> Result<CalendarRow, AppError> {
-        if request.name.is_none() && request.active.is_none() {
-            return Err(AppError::BadRequest("No fields provided"));
-        }
-
-        if let Some(ref new_name) = request.name {
-            if let Some(existing) = self.repository.get_by_name(new_name).await? {
-                if existing.id != id {
-                    return Err(AppError::Conflict("Calendar name is already in use"));
-                }
-            }
-        }
-
-        let update_result = self
+    pub async fn update(&self, id: u32, req: UpdateCalendarRequest) -> Result<(), AppError> {
+        let n = self
             .repository
-            .update(id, request.name.as_deref(), request.active)
-            .await;
+            .update(
+                id,
+                req.name.as_deref(),
+                req.active,
+                Some(req.thumbnail_id), // wrap Option in Option to signal presence
+            )
+            .await?;
 
-        match update_result {
-            Ok(_rows_affected) => {
-                let row = self.repository.get_by_id(id).await?;
-                row.ok_or(AppError::NotFound("Calendar not found"))
-            }
-            Err(sqlx::Error::Database(database_error))
-                if database_error.code().as_deref() == Some("1062") =>
-            {
-                Err(AppError::Conflict("Calendar name is already in use"))
-            }
-            Err(sqlx::Error::Database(database_error)) => {
-                Err(AppError::Database(sqlx::Error::Database(database_error)))
-            }
-            Err(error) => Err(AppError::Database(error)),
+        if n == 0 {
+            Err(AppError::NotFound("Calendar not found"))
+        } else {
+            Ok(())
         }
     }
 
     pub async fn delete(&self, id: u32) -> Result<(), AppError> {
-        let n = self
-            .repository
-            .delete(id)
-            .await
-            .map_err(AppError::Database)?;
-
-        if n == false {
-            Err(AppError::NotFound("Calendar not found"))
-        } else {
+        let n = self.repository.delete(id).await?;
+        if n {
             Ok(())
+        } else {
+            Err(AppError::NotFound("Calendar not found"))
         }
     }
 }

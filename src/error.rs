@@ -10,8 +10,6 @@ pub enum AppError {
     #[error(transparent)]
     Database(#[from] sqlx::Error),
     #[error("{0}")]
-    Conflict(&'static str),
-    #[error("{0}")]
     NotFound(&'static str),
     #[error("{0}")]
     BadRequest(&'static str),
@@ -21,7 +19,6 @@ impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, msg) = match &self {
             AppError::Database(_) => (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()),
-            AppError::Conflict(_) => (StatusCode::CONFLICT, self.to_string()),
             AppError::NotFound(_) => (StatusCode::NOT_FOUND, self.to_string()),
             AppError::BadRequest(_) => (StatusCode::BAD_REQUEST, self.to_string()),
         };

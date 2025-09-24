@@ -6,6 +6,7 @@ use crate::{
         bookings::{repository::MySqlBookingsRepository, service::BookingsService},
         calendars::{repository::MySqlCalendarsRepository, service::CalendarsService},
         contact_info::{repository::MySqlContactInfoRepository, service::ContactInfoService},
+        media::{repository::MySqlMediaRepository, service::MediaService},
         notices::{repository::MySqlNoticesRepository, service::NoticesService},
         opening_hours::{
             repository::{MySqlOpeningExceptionsRepository, MySqlOpeningHoursRepository},
@@ -26,6 +27,7 @@ pub struct AppState {
     pub opening_hours: OpeningHoursService,
     pub opening_exceptions: OpeningExceptionsService,
     pub contact_info: ContactInfoService,
+    pub media: MediaService,
 }
 
 impl AppState {
@@ -37,6 +39,7 @@ impl AppState {
         let opening_exceptions_repository =
             Arc::new(MySqlOpeningExceptionsRepository::new(pool.clone()));
         let contact_info_repository = Arc::new(MySqlContactInfoRepository::new(pool.clone()));
+        let media_repository = Arc::new(MySqlMediaRepository::new(pool.clone()));
 
         Self {
             config,
@@ -47,6 +50,7 @@ impl AppState {
             opening_hours: OpeningHoursService::new(opening_hours_repository),
             opening_exceptions: OpeningExceptionsService::new(opening_exceptions_repository),
             contact_info: ContactInfoService::new(contact_info_repository),
+            media: MediaService::new(media_repository),
         }
     }
 }

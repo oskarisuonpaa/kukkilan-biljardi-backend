@@ -6,6 +6,19 @@ CREATE TABLE IF NOT EXISTS contact_info (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CHECK (id = 1)
 );
+INSERT INTO contact_info (id, address, phone, email)
+VALUES (
+        1,
+        'Latojantie 6, 15270 Kukkila',
+        '040 0421453',
+        'vilkasprosnookervaraukset@gmail.com'
+    ) ON DUPLICATE KEY
+UPDATE address =
+VALUES(address),
+    phone =
+VALUES(phone),
+    email =
+VALUES(email);
 CREATE TABLE IF NOT EXISTS notices (
     id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL,
@@ -44,3 +57,14 @@ CREATE TABLE IF NOT EXISTS opening_exceptions (
         )
     )
 );
+CREATE TABLE IF NOT EXISTS media (
+    id INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    is_background BOOLEAN NOT NULL DEFAULT FALSE,
+    kind TEXT NOT NULL CHECK (kind IN ('image', 'video')),
+    file_url TEXT NOT NULL,
+    alt_text TEXT NOT NULL,
+    width INT UNSIGNED,
+    height INT UNSIGNED,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+)

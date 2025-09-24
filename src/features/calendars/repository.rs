@@ -6,9 +6,19 @@ use sqlx::{MySql, Pool};
 pub trait CalendarsRepository: Send + Sync {
     async fn list(&self) -> sqlx::Result<Vec<CalendarRow>>;
     async fn get_by_id(&self, id: u32) -> sqlx::Result<Option<CalendarRow>>;
-    async fn get_by_name(&self, name: &str) -> sqlx::Result<Option<CalendarRow>>;
-    async fn insert(&self, name: &str, active: bool) -> sqlx::Result<u32>;
-    async fn update(&self, id: u32, name: Option<&str>, active: Option<bool>) -> sqlx::Result<u32>;
+    async fn insert(
+        &self,
+        name: &str,
+        active: bool,
+        thumbnail_id: Option<u32>,
+    ) -> sqlx::Result<u32>;
+    async fn update(
+        &self,
+        id: u32,
+        name: Option<&str>,
+        active: Option<bool>,
+        thumbnail_id: Option<Option<u32>>,
+    ) -> sqlx::Result<u32>;
     async fn delete(&self, id: u32) -> sqlx::Result<bool>;
 }
 
@@ -27,90 +37,68 @@ impl MySqlCalendarsRepository {
 #[async_trait]
 impl CalendarsRepository for MySqlCalendarsRepository {
     async fn list(&self) -> sqlx::Result<Vec<CalendarRow>> {
-        let rows = sqlx::query!(r#"Select * FROM calendars"#)
+        sqlx::query_as::<_, CalendarRow>(r#"SELECT id, name, thumbnail_id, active, created_at, updated_at FROM calendars ORDER BY id DESC"#)
             .fetch_all(&self.pool)
-            .await?;
-
-        Ok(rows
-            .into_iter()
-            .map(|row| CalendarRow {
-                id: row.id,
-                name: row.name,
-                active: row.active != 0,
-                created_at: row.created_at.clone(),
-                updated_at: row.updated_at.clone(),
-            })
-            .collect())
+            .await
     }
 
     async fn get_by_id(&self, id: u32) -> sqlx::Result<Option<CalendarRow>> {
-        let row = sqlx::query!(r#"SELECT * FROM calendars WHERE id = ?"#, id)
+        sqlx::query_as::<_, CalendarRow>(r#"SELECT id, name, thumbnail_id, active, created_at, updated_at FROM calendars WHERE id = ?"#)
+            .bind(id)
             .fetch_optional(&self.pool)
-            .await?;
-
-        Ok(row.map(|row| CalendarRow {
-            id: row.id,
-            name: row.name,
-            active: row.active != 0,
-            created_at: row.created_at.clone(),
-            updated_at: row.updated_at.clone(),
-        }))
+            .await
     }
 
-    async fn get_by_name(&self, name: &str) -> sqlx::Result<Option<CalendarRow>> {
-        let row = sqlx::query!(r#"SELECT * FROM calendars WHERE name = ?"#, name)
-            .fetch_optional(&self.pool)
-            .await?;
-
-        Ok(row.map(|row| CalendarRow {
-            id: row.id,
-            name: row.name,
-            active: row.active != 0,
-            created_at: row.created_at.clone(),
-            updated_at: row.updated_at.clone(),
-        }))
-    }
-
-    async fn insert(&self, name: &str, active: bool) -> sqlx::Result<u32> {
-        let response = sqlx::query!(
-            r#"INSERT INTO calendars (name, active) VALUES (?,?)"#,
+    async fn insert(
+        &self,
+        name: &str,
+        active: bool,
+        thumbnail_id: Option<u32>,
+    ) -> sqlx::Result<u32> {
+        let res = sqlx::query!(
+            r#"INSERT INTO calendars (name, thumbnail_id, active) VALUES (?, ?, ?)"#,
             name,
+            thumbnail_id,
             active
         )
         .execute(&self.pool)
         .await?;
-
-        Ok(response.last_insert_id() as u32)
+        Ok(res.last_insert_id() as u32)
     }
 
-    async fn update(&self, id: u32, name: Option<&str>, active: Option<bool>) -> sqlx::Result<u32> {
-        if name.is_none() && active.is_none() {
-            return Ok(0);
-        }
-
+    async fn update(
+        &self,
+        id: u32,
+        name: Option<&str>,
+        active: Option<bool>,
+        thumbnail_id: Option<Option<u32>>,
+    ) -> sqlx::Result<u32> {
         let res = sqlx::query!(
             r#"
-            UPDATE calendars
-            SET
-                name   = COALESCE(?, name),
-                active = COALESCE(?, active)
+            UPDATE calendars SET
+              name = COALESCE(?, name),
+              active = COALESCE(?, active),
+              thumbnail_id = CASE
+                  WHEN ? IS NULL THEN thumbnail_id
+                  ELSE ?
+              END
             WHERE id = ?
             "#,
-            name,   // Option<&str> → NULL means "keep existing"
-            active, // Option<bool> → NULL means "keep existing"
+            name,
+            active,
+            thumbnail_id.as_ref().map(|_| 0u8),
+            thumbnail_id.unwrap_or(None),
             id
         )
         .execute(&self.pool)
         .await?;
-
         Ok(res.rows_affected() as u32)
     }
 
     async fn delete(&self, id: u32) -> sqlx::Result<bool> {
-        let result = sqlx::query!(r#"DELETE FROM calendars WHERE id = ?"#, id)
+        let res = sqlx::query!(r#"DELETE FROM calendars WHERE id = ?"#, id)
             .execute(&self.pool)
             .await?;
-
-        Ok(result.rows_affected() > 0)
+        Ok(res.rows_affected() > 0)
     }
 }
