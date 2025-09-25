@@ -18,7 +18,7 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/api/calendars", get(list).post(create))
         .route(
-            "/api/calendars/:id",
+            "/api/calendars/{id}",
             get(get_by_id).patch(update).delete(delete_one),
         )
 }

@@ -9,6 +9,7 @@ use axum::{Router, http::HeaderValue};
 use config::AppConfig;
 use infrastructure::database::connect;
 use tower_http::cors::{Any, CorsLayer};
+use tower_http::services::ServeDir;
 
 use crate::{infrastructure::database::run_migrations, state::AppState};
 
@@ -27,6 +28,8 @@ async fn main() {
         .allow_methods(Any)
         .allow_headers(Any);
 
+    let uploads_service = ServeDir::new(app_state.config.media_root.clone());
+
     let app = Router::new()
         .merge(features::calendars::routes())
         .merge(features::bookings::routes())
@@ -34,6 +37,7 @@ async fn main() {
         .merge(features::opening_hours::routes())
         .merge(features::contact_info::routes())
         .merge(features::media::routes())
+        .nest_service(&app_state.config.media_base_url, uploads_service)
         .with_state(app_state)
         .layer(cors);
 
