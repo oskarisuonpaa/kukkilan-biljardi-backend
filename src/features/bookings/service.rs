@@ -51,7 +51,7 @@ impl BookingsService {
             .repository
             .delete(id)
             .await
-            .map_err(AppError::Database)?;
+            .map_err(AppError::DatabaseError)?;
 
         if n == false {
             Err(AppError::NotFound("Booking not found"))

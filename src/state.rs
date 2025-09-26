@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::{
     config::AppConfig,
     features::{
+        auth::{repository::MySqlAuthRepository, service::AuthService},
         bookings::{repository::MySqlBookingsRepository, service::BookingsService},
         calendars::{repository::MySqlCalendarsRepository, service::CalendarsService},
         contact_info::{repository::MySqlContactInfoRepository, service::ContactInfoService},
@@ -21,6 +22,7 @@ use sqlx::{MySql, Pool};
 pub struct AppState {
     pub config: AppConfig,
     pub pool: Pool<MySql>,
+    pub auth: AuthService,
     pub calendars: CalendarsService,
     pub bookings: BookingsService,
     pub notices: NoticesService,
@@ -32,6 +34,7 @@ pub struct AppState {
 
 impl AppState {
     pub fn new(config: AppConfig, pool: Pool<MySql>) -> Self {
+        let auth_repository = Arc::new(MySqlAuthRepository::new(pool.clone()));
         let calendars_repository = Arc::new(MySqlCalendarsRepository::new(pool.clone()));
         let bookings_repository = Arc::new(MySqlBookingsRepository::new(pool.clone()));
         let notices_repository = Arc::new(MySqlNoticesRepository::new(pool.clone()));
@@ -44,6 +47,7 @@ impl AppState {
         Self {
             config,
             pool,
+            auth: AuthService::new(auth_repository),
             calendars: CalendarsService::new(calendars_repository),
             bookings: BookingsService::new(bookings_repository),
             notices: NoticesService::new(notices_repository),

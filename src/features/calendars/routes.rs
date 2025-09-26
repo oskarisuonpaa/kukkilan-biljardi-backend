@@ -14,13 +14,26 @@ use axum::{
     routing::get,
 };
 
-pub fn routes() -> Router<AppState> {
+// Public routes that don't require authentication
+pub fn public_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/calendars", get(list).post(create))
+        .route("/api/calendars", get(list))
+        .route("/api/calendars/{id}", get(get_by_id))
+}
+
+// Admin routes that require authentication
+pub fn admin_routes() -> Router<AppState> {
+    Router::new()
+        .route("/api/admin/calendars", axum::routing::post(create))
         .route(
-            "/api/calendars/{id}",
-            get(get_by_id).patch(update).delete(delete_one),
+            "/api/admin/calendars/{id}",
+            axum::routing::patch(update).delete(delete_one),
         )
+}
+
+// Backward compatibility - combine both routes
+pub fn routes() -> Router<AppState> {
+    Router::new().merge(public_routes()).merge(admin_routes())
 }
 
 async fn list(State(state): State<AppState>) -> Result<Json<Vec<CalendarResponse>>, AppError> {

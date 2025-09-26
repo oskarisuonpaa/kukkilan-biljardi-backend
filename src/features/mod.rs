@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod bookings;
 pub mod calendars;
 pub mod contact_info;

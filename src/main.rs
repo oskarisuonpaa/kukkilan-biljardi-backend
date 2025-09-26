@@ -11,7 +11,10 @@ use infrastructure::database::connect;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
 
-use crate::{infrastructure::database::run_migrations, state::AppState};
+use crate::{
+    infrastructure::database::run_migrations, 
+    state::AppState,
+};
 
 #[tokio::main]
 async fn main() {
@@ -31,12 +34,15 @@ async fn main() {
     let uploads_service = ServeDir::new(app_state.config.media_root.clone());
 
     let app = Router::new()
+        // Public routes
         .merge(features::calendars::routes())
         .merge(features::bookings::routes())
         .merge(features::notices::routes())
         .merge(features::opening_hours::routes())
         .merge(features::contact_info::routes())
         .merge(features::media::routes())
+        // Auth routes
+        .merge(features::auth::routes())
         .nest_service(&app_state.config.media_base_url, uploads_service)
         .with_state(app_state)
         .layer(cors);

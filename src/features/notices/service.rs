@@ -66,9 +66,9 @@ impl NoticesService {
                 notice_row.ok_or(AppError::NotFound("Notice not found"))
             }
             Err(sqlx::Error::Database(database_error)) => {
-                Err(AppError::Database(sqlx::Error::Database(database_error)))
+                Err(AppError::DatabaseError(sqlx::Error::Database(database_error)))
             }
-            Err(error) => Err(AppError::Database(error)),
+            Err(error) => Err(AppError::DatabaseError(error)),
         }
     }
 
@@ -77,7 +77,7 @@ impl NoticesService {
             .repository
             .delete(notice_id)
             .await
-            .map_err(AppError::Database)?;
+            .map_err(AppError::DatabaseError)?;
 
         if !was_deleted {
             Err(AppError::NotFound("Notice not found"))

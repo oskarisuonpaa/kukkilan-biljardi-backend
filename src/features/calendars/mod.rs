@@ -4,4 +4,4 @@ pub mod repository;
 pub mod routes;
 pub mod service;
 
-pub use routes::routes;
+pub use routes::{routes, public_routes, admin_routes};
