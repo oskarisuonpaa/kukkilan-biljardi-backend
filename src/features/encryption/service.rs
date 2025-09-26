@@ -12,9 +12,11 @@ impl EncryptionService {
     pub fn new() -> Result<Self, AppError> {
         let key_str = std::env::var("ENCRYPTION_KEY")
             .map_err(|_| AppError::Internal("ENCRYPTION_KEY environment variable not set"))?;
-        
+
         if key_str.len() != 64 {
-            return Err(AppError::Internal("ENCRYPTION_KEY must be 64 hex characters (32 bytes)"));
+            return Err(AppError::Internal(
+                "ENCRYPTION_KEY must be 64 hex characters (32 bytes)",
+            ));
         }
 
         let mut key = [0u8; 32];
@@ -27,6 +29,53 @@ impl EncryptionService {
         Ok(Self { key })
     }
 
+    /// Create a new encryption service with a default development key
+    /// WARNING: Only for development use! Do not use in production!
+    pub fn new_with_default_key() -> Self {
+        tracing::warn!("Using default encryption key - NOT SECURE FOR PRODUCTION!");
+        let key = [
+            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E,
+            0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C,
+            0x1D, 0x1E, 0x1F, 0x20,
+        ];
+        Self { key }
+    }
+
+    /// Create encryption service from config, with fallback to default key
+    pub fn from_config(config_key: Option<&String>) -> Self {
+        match config_key {
+            Some(key_str) => {
+                if key_str.len() != 64 {
+                    tracing::warn!(
+                        "ENCRYPTION_KEY must be 64 hex characters. Using fallback encryption."
+                    );
+                    return Self::new_with_default_key();
+                }
+
+                let mut key = [0u8; 32];
+                for i in 0..32 {
+                    let hex_byte = &key_str[i * 2..i * 2 + 2];
+                    match u8::from_str_radix(hex_byte, 16) {
+                        Ok(byte) => key[i] = byte,
+                        Err(_) => {
+                            tracing::warn!(
+                                "Invalid hex in ENCRYPTION_KEY. Using fallback encryption."
+                            );
+                            return Self::new_with_default_key();
+                        }
+                    }
+                }
+
+                tracing::info!("Using encryption key from configuration");
+                Self { key }
+            }
+            None => {
+                tracing::warn!("ENCRYPTION_KEY not provided in config. Using fallback encryption.");
+                Self::new_with_default_key()
+            }
+        }
+    }
+
     /// Encrypt a string and return base64-encoded result
     pub fn encrypt(&self, plaintext: &str) -> Result<String, AppError> {
         if plaintext.is_empty() {
@@ -37,7 +86,7 @@ impl EncryptionService {
         // In production, use proper AES encryption with libraries like `aes-gcm`
         let mut encrypted = Vec::new();
         let plaintext_bytes = plaintext.as_bytes();
-        
+
         for (i, &byte) in plaintext_bytes.iter().enumerate() {
             let key_byte = self.key[i % self.key.len()];
             encrypted.push(byte ^ key_byte);

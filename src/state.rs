@@ -7,7 +7,7 @@ use crate::{
         bookings::{repository::MySqlBookingsRepository, service::BookingsService},
         calendars::{repository::MySqlCalendarsRepository, service::CalendarsService},
         contact_info::{repository::MySqlContactInfoRepository, service::ContactInfoService},
-        email::{service::EmailService, model::EmailConfig},
+        email::{model::EmailConfig, service::EmailService},
         encryption::EncryptionService,
         media::{repository::MySqlMediaRepository, service::MediaService},
         notices::{repository::MySqlNoticesRepository, service::NoticesService},
@@ -51,26 +51,34 @@ impl AppState {
         // Email configuration from environment
         let email_config = EmailConfig {
             smtp_host: std::env::var("SMTP_HOST").unwrap_or_else(|_| "localhost".to_string()),
-            smtp_port: std::env::var("SMTP_PORT").unwrap_or_else(|_| "587".to_string()).parse().unwrap_or(587),
+            smtp_port: std::env::var("SMTP_PORT")
+                .unwrap_or_else(|_| "587".to_string())
+                .parse()
+                .unwrap_or(587),
             smtp_username: std::env::var("SMTP_USERNAME").unwrap_or_default(),
             smtp_password: std::env::var("SMTP_PASSWORD").unwrap_or_default(),
-            from_email: std::env::var("FROM_EMAIL").unwrap_or_else(|_| "noreply@kukkilan-biljardi.fi".to_string()),
-            from_name: std::env::var("FROM_NAME").unwrap_or_else(|_| "Kukkilan Biljardi".to_string()),
-            enabled: std::env::var("EMAIL_ENABLED").unwrap_or_else(|_| "false".to_string()).parse().unwrap_or(false),
+            from_email: std::env::var("FROM_EMAIL")
+                .unwrap_or_else(|_| "noreply@kukkilan-biljardi.fi".to_string()),
+            from_name: std::env::var("FROM_NAME")
+                .unwrap_or_else(|_| "Kukkilan Biljardi".to_string()),
+            enabled: std::env::var("EMAIL_ENABLED")
+                .unwrap_or_else(|_| "false".to_string())
+                .parse()
+                .unwrap_or(false),
         };
 
-        let encryption_service = EncryptionService::new().unwrap_or_else(|err| {
-            tracing::warn!("Failed to initialize encryption service: {}. Customer data will not be encrypted.", err);
-            // Return a dummy service that doesn't actually encrypt
-            panic!("Encryption service initialization failed: {}", err);
-        });
+        let encryption_service = EncryptionService::from_config(config.encryption_key.as_ref());
 
         Self {
             config,
             pool,
             auth: AuthService::new(auth_repository),
             calendars: CalendarsService::new(calendars_repository.clone()),
-            bookings: BookingsService::new(bookings_repository, calendars_repository.clone(), encryption_service.clone()),
+            bookings: BookingsService::new(
+                bookings_repository,
+                calendars_repository.clone(),
+                encryption_service.clone(),
+            ),
             notices: NoticesService::new(notices_repository),
             opening_hours: OpeningHoursService::new(opening_hours_repository),
             opening_exceptions: OpeningExceptionsService::new(opening_exceptions_repository),

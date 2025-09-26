@@ -7,6 +7,7 @@ pub struct AppConfig {
     pub port: u16,
     pub media_root: std::path::PathBuf,
     pub media_base_url: String,
+    pub encryption_key: Option<String>,
 }
 
 impl AppConfig {
@@ -23,6 +24,7 @@ impl AppConfig {
                 .unwrap_or_else(|_| std::path::PathBuf::from("storage/uploads")),
             media_base_url: std::env::var("MEDIA_BASE_URL")
                 .unwrap_or_else(|_| "/uploads".to_string()),
+            encryption_key: std::env::var("ENCRYPTION_KEY").ok(),
         }
     }
 }
