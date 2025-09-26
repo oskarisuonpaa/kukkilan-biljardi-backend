@@ -1,0 +1,1 @@
+ALTER TABLE calendars DROP COLUMN hourly_price_cents;

@@ -91,6 +91,7 @@ fn row_to_response(row: CalendarRow, thumbnail: Option<MediaResponse>) -> Calend
         id: row.id,
         name: row.name,
         active: row.active,
+        hourly_price_cents: row.hourly_price_cents,
         thumbnail,
     }
 }

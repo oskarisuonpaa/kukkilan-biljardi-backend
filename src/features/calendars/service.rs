@@ -31,7 +31,12 @@ impl CalendarsService {
     pub async fn create(&self, req: CreateCalendarRequest) -> Result<u32, AppError> {
         let id = self
             .repository
-            .insert(&req.name, req.active.unwrap_or(true), req.thumbnail_id)
+            .insert(
+                &req.name,
+                req.active.unwrap_or(true),
+                req.thumbnail_id,
+                req.hourly_price_cents,
+            )
             .await?;
         Ok(id)
     }
@@ -44,6 +49,7 @@ impl CalendarsService {
                 req.name.as_deref(),
                 req.active,
                 Some(req.thumbnail_id), // wrap Option in Option to signal presence
+                req.hourly_price_cents,
             )
             .await?;
 
