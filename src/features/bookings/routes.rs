@@ -1,4 +1,4 @@
-use super::data_transfer_objects::BookingResponse;
+use super::data_transfer_objects::{BookingResponse, DailyOverviewResponse};
 use crate::{
     error::AppError,
     features::bookings::{data_transfer_objects::CreateBookingRequest, model::BookingRow},
@@ -7,16 +7,36 @@ use crate::{
 };
 use axum::{
     Json, Router,
-    extract::{Path, State},
+    extract::{Path, State, Query},
     routing::{get, post},
+    http::header::AUTHORIZATION,
+    http::HeaderMap,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, NaiveDate};
+use serde::Deserialize;
 
-pub fn routes() -> Router<AppState> {
+#[derive(Deserialize)]
+struct DailyOverviewQuery {
+    date: String,
+}
+
+// Public routes that don't require authentication
+pub fn public_routes() -> Router<AppState> {
     Router::new()
         .route("/api/calendar/{calendar_id}/bookings", get(list))
         .route("/api/bookings", post(create))
         .route("/api/bookings/{id}", axum::routing::delete(delete))
+}
+
+// Admin routes that require authentication
+pub fn admin_routes() -> Router<AppState> {
+    Router::new()
+        .route("/api/admin/bookings/daily-overview", get(daily_overview))
+}
+
+// Backward compatibility - combine both routes
+pub fn routes() -> Router<AppState> {
+    Router::new().merge(public_routes()).merge(admin_routes())
 }
 
 async fn list(
@@ -42,6 +62,34 @@ async fn create(
 async fn delete(State(state): State<AppState>, Path(id): Path<u32>) -> Result<NoContent, AppError> {
     state.bookings.delete(id).await?;
     Ok(NoContent)
+}
+
+async fn daily_overview(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Query(params): Query<DailyOverviewQuery>,
+) -> Result<Json<DailyOverviewResponse>, AppError> {
+    // Check authorization
+    let auth_header = headers
+        .get(AUTHORIZATION)
+        .and_then(|header| header.to_str().ok());
+
+    let token = match auth_header {
+        Some(header) if header.starts_with("Bearer ") => &header[7..],
+        _ => {
+            return Err(AppError::Unauthorized("Missing or invalid authorization header".to_string()));
+        }
+    };
+
+    // Verify token
+    state.auth.verify_token(token)?;
+
+    // Validate the date format
+    params.date.parse::<NaiveDate>()
+        .map_err(|_| AppError::BadRequest("Invalid date format"))?;
+    
+    let overview = state.bookings.daily_overview(&params.date).await?;
+    Ok(Json(overview))
 }
 
 fn row_to_response(row: BookingRow) -> BookingResponse {

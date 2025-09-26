@@ -10,6 +10,7 @@ pub trait BookingsRepository: Send + Sync {
     async fn get(&self, id: u32) -> sqlx::Result<Option<BookingRow>>;
     async fn insert(&self, data: CreateBookingRequest) -> sqlx::Result<u32>;
     async fn delete(&self, id: u32) -> sqlx::Result<bool>;
+    async fn list_by_date(&self, date: &str) -> sqlx::Result<Vec<BookingRow>>;
 }
 
 pub type DynamicBookingsRepository = std::sync::Arc<dyn BookingsRepository>;
@@ -114,5 +115,38 @@ impl BookingsRepository for MySqlBookingsRepository {
             .await?;
 
         Ok(result.rows_affected() > 0)
+    }
+
+    async fn list_by_date(&self, date: &str) -> sqlx::Result<Vec<BookingRow>> {
+        let rows = sqlx::query!(
+            r#"
+            SELECT
+                id, calendar_id, starts_at_utc, ends_at_utc,
+                customer_name, customer_email, customer_phone, customer_notes,
+                created_at, updated_at
+            FROM bookings
+            WHERE DATE(CONVERT_TZ(starts_at_utc, '+00:00', '+02:00')) = ?
+            ORDER BY starts_at_utc
+            "#,
+            date
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|row| BookingRow {
+                id: row.id,
+                calendar_id: row.calendar_id,
+                starts_at_utc: row.starts_at_utc,
+                ends_at_utc: row.ends_at_utc,
+                customer_name: row.customer_name,
+                customer_email: row.customer_email,
+                customer_phone: row.customer_phone,
+                customer_notes: row.customer_notes,
+                created_at: row.created_at,
+                updated_at: row.updated_at,
+            })
+            .collect())
     }
 }
