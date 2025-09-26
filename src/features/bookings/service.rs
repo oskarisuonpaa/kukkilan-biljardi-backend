@@ -6,6 +6,7 @@ use crate::{
             BookingOverview, CreateBookingRequest, DailyOverviewResponse,
         },
         calendars::repository::DynamicCalendarsRepository,
+        encryption::EncryptionService,
     },
 };
 
@@ -13,21 +14,33 @@ use crate::{
 pub struct BookingsService {
     repository: DynamicBookingsRepository,
     calendars_repository: DynamicCalendarsRepository,
+    encryption: EncryptionService,
 }
 
 impl BookingsService {
     pub fn new(
         repository: DynamicBookingsRepository,
         calendars_repository: DynamicCalendarsRepository,
+        encryption: EncryptionService,
     ) -> Self {
         Self {
             repository,
             calendars_repository,
+            encryption,
         }
     }
 
     pub async fn list(&self, calendar_id: u32) -> Result<Vec<BookingRow>, AppError> {
-        Ok(self.repository.list(calendar_id).await?)
+        let mut rows = self.repository.list(calendar_id).await?;
+
+        // Decrypt customer data in all retrieved rows
+        for row in &mut rows {
+            row.customer_name = self.encryption.decrypt_name(&row.customer_name)?;
+            row.customer_email = self.encryption.decrypt_email(&row.customer_email)?;
+            row.customer_phone = self.encryption.decrypt_phone(&row.customer_phone)?;
+        }
+
+        Ok(rows)
     }
 
     pub async fn create(&self, request: CreateBookingRequest) -> Result<BookingRow, AppError> {
@@ -50,13 +63,24 @@ impl BookingsService {
 
         /* TODO: Check that there is no overlap */
 
-        let id = self.repository.insert(request).await?;
+        // Encrypt customer data before storing
+        let mut encrypted_request = request.clone();
+        encrypted_request.name = self.encryption.encrypt_name(&request.name)?;
+        encrypted_request.email = self.encryption.encrypt_email(&request.email)?;
+        encrypted_request.phone = self.encryption.encrypt_phone(&request.phone)?;
 
-        let row = self
+        let id = self.repository.insert(encrypted_request).await?;
+
+        let mut row = self
             .repository
             .get(id)
             .await?
             .ok_or(AppError::NotFound("Failed to fetch newly created booking"))?;
+
+        // Decrypt customer data before returning
+        row.customer_name = self.encryption.decrypt_name(&row.customer_name)?;
+        row.customer_email = self.encryption.decrypt_email(&row.customer_email)?;
+        row.customer_phone = self.encryption.decrypt_phone(&row.customer_phone)?;
 
         Ok(row)
     }
@@ -77,7 +101,7 @@ impl BookingsService {
 
     pub async fn daily_overview(&self, date: &str) -> Result<DailyOverviewResponse, AppError> {
         // Get all bookings for the date
-        let bookings = self.repository.list_by_date(date).await?;
+        let mut bookings = self.repository.list_by_date(date).await?;
         let total_bookings = bookings.len();
 
         if bookings.is_empty() {
@@ -89,6 +113,13 @@ impl BookingsService {
                 tables_used: 0,
                 utilization_percentage: 0.0,
             });
+        }
+
+        // Decrypt customer data for all bookings
+        for booking in &mut bookings {
+            booking.customer_name = self.encryption.decrypt_name(&booking.customer_name)?;
+            booking.customer_email = self.encryption.decrypt_email(&booking.customer_email)?;
+            booking.customer_phone = self.encryption.decrypt_phone(&booking.customer_phone)?;
         }
 
         // Get all calendars for names and pricing

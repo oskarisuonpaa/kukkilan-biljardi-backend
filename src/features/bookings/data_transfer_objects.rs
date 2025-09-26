@@ -13,7 +13,7 @@ pub struct BookingResponse {
     pub end: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct CreateBookingRequest {
     pub calendar_id: u32,
     pub name: String,
