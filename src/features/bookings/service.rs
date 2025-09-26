@@ -16,6 +16,23 @@ impl BookingsService {
     }
 
     pub async fn create(&self, request: CreateBookingRequest) -> Result<BookingRow, AppError> {
+        // Validate booking is not in the past
+        let now = chrono::Utc::now();
+        if request.start <= now {
+            return Err(AppError::BadRequest("Booking cannot be in the past"));
+        }
+
+        // Validate end time is after start time
+        if request.end <= request.start {
+            return Err(AppError::BadRequest("End time must be after start time"));
+        }
+
+        // Validate minimum booking duration (1 hour)
+        let duration = request.end - request.start;
+        if duration.num_minutes() < 60 {
+            return Err(AppError::BadRequest("Booking must be at least 1 hour long"));
+        }
+
         /* TODO: Check that there is no overlap */
 
         let id = self.repository.insert(request).await?;
