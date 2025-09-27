@@ -6,4 +6,5 @@ pub mod data_transfer_objects;
 pub mod middleware;
 
 pub use routes::routes;
-pub use middleware::require_auth;
+pub use repository::AuthRepository;
+pub use service::AuthService;

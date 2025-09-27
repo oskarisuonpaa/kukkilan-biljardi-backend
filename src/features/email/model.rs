@@ -10,6 +10,7 @@ pub struct EmailMessage {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct EmailConfig {
     pub smtp_host: String,
     pub smtp_port: u16,

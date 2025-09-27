@@ -1,4 +1,4 @@
-use sqlx::{MySqlPool, Row};
+use sqlx::MySqlPool;
 use chrono::Utc;
 use async_trait::async_trait;
 use crate::features::auth::model::AdminUser;

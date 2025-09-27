@@ -9,6 +9,7 @@ pub struct EncryptionService {
 
 impl EncryptionService {
     /// Create a new encryption service with a key from environment variable
+    #[allow(dead_code)]
     pub fn new() -> Result<Self, AppError> {
         let key_str = std::env::var("ENCRYPTION_KEY")
             .map_err(|_| AppError::Internal("ENCRYPTION_KEY environment variable not set"))?;
@@ -166,6 +167,7 @@ impl EncryptionService {
 }
 
 /// Generate a random 256-bit encryption key in hex format
+#[allow(dead_code)]
 pub fn generate_encryption_key() -> String {
     use rand::RngCore;
     let mut key = [0u8; 32];

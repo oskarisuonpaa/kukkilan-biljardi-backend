@@ -124,6 +124,7 @@ impl AuthService {
         }
     }
 
+    #[allow(dead_code)]
     pub fn create_session(&self, user: AdminUser) -> AdminSession {
         AdminSession {
             user_id: user.id,

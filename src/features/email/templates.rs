@@ -1,5 +1,3 @@
-use chrono::{DateTime, Utc};
-
 pub struct BookingConfirmationData {
     pub customer_name: String,
     pub calendar_name: String,

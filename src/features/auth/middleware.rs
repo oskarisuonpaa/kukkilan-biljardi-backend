@@ -5,11 +5,11 @@ use axum::{
     response::Response,
 };
 use crate::{
-    features::auth::data_transfer_objects::TokenClaims,
     state::AppState,
     error::AppError,
 };
 
+#[allow(dead_code)]
 pub async fn require_auth(
     State(state): State<AppState>,
     mut request: Request,

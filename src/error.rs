@@ -20,6 +20,7 @@ pub enum AppError {
     #[error("{0}")]
     Unauthorized(String),
     #[error("{0}")]
+    #[allow(dead_code)]
     InternalServerError(String),
 }
 
