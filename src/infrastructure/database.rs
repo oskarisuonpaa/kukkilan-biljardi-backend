@@ -9,11 +9,10 @@ pub async fn connect(url: &str) -> Pool<MySql> {
 }
 
 pub async fn run_migrations(pool: &Pool<MySql>) {
-    // Temporarily disable migrations to fix checksum issues
-    // sqlx::migrate!("./migrations")
-    //     .run(pool)
-    //     .await
-    //     .expect("migrations failed");
-    
-    tracing::info!("Migrations skipped - manual setup in place");
+    sqlx::migrate!("./migrations")
+        .run(pool)
+        .await
+        .expect("migrations failed");
+
+    tracing::info!("Migrations completed successfully");
 }
