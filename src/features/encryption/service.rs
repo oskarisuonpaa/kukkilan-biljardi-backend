@@ -101,18 +101,37 @@ impl EncryptionService {
             return Ok(String::new());
         }
 
-        let encrypted_bytes = general_purpose::STANDARD
-            .decode(ciphertext)
-            .map_err(|_| AppError::Internal("Invalid base64 in encrypted data"))?;
+        // Try to decode as base64 first
+        match general_purpose::STANDARD.decode(ciphertext) {
+            Ok(encrypted_bytes) => {
+                // Successfully decoded base64, try to decrypt
+                let mut decrypted = Vec::new();
+                for (i, &byte) in encrypted_bytes.iter().enumerate() {
+                    let key_byte = self.key[i % self.key.len()];
+                    decrypted.push(byte ^ key_byte);
+                }
 
-        let mut decrypted = Vec::new();
-        for (i, &byte) in encrypted_bytes.iter().enumerate() {
-            let key_byte = self.key[i % self.key.len()];
-            decrypted.push(byte ^ key_byte);
+                match String::from_utf8(decrypted) {
+                    Ok(decrypted_string) => Ok(decrypted_string),
+                    Err(_) => {
+                        // If decryption fails, assume it's plain text and return as-is
+                        tracing::warn!(
+                            "Failed to decrypt data, assuming plain text: {}",
+                            ciphertext
+                        );
+                        Ok(ciphertext.to_string())
+                    }
+                }
+            }
+            Err(_) => {
+                // Not valid base64, assume it's plain text
+                tracing::debug!(
+                    "Data not base64 encoded, assuming plain text: {}",
+                    ciphertext
+                );
+                Ok(ciphertext.to_string())
+            }
         }
-
-        String::from_utf8(decrypted)
-            .map_err(|_| AppError::Internal("Invalid UTF-8 in decrypted data"))
     }
 
     /// Encrypt customer email
